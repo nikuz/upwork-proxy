@@ -17,7 +17,7 @@ var responseSend = function(res, err, data) {
   if (err) {
     result.error = err;
   } else {
-    result.result = data;
+    result = data;
   }
   res.send(result);
 };
