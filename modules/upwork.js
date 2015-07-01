@@ -2,7 +2,7 @@
 
 var config = require('../config.json'),
   _ = require('underscore'),
-  OAuth = require('./oauth'),
+  OAuth = require('../components/oauth'),
   https = require('https');
 
 var oauth = OAuth.init({

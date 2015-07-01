@@ -9,6 +9,7 @@
   "author": "Nikolay Kuznetcov",
   "license": "ISC",
   "devDependencies": {
+    "body-parser": "^1.13.1",
     "crypto-js": "^3.1.5",
     "express": "^4.13.0",
     "grunt": "^0.4.5",
@@ -16,6 +17,7 @@
     "grunt-jscs": "~1.2.0",
     "load-grunt-tasks": "^3.2.0",
     "nodemailer": "^1.4.0",
+    "redis": "^0.12.1",
     "underscore": "^1.8.3"
   }
 }
