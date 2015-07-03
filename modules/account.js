@@ -5,8 +5,38 @@ var _ = require('underscore'),
 
 var noop = function() {};
 
-var getFeedsName = function(feeds) {
-  return feeds.trim().replace(/\s+/, '_');
+var fillMinutes = function(options, callback) {
+  var opts = options || {},
+    cb = callback || noop,
+    userid = opts.userid,
+    interval = Number(opts.interval),
+    prevInterval = Number(opts.prevInterval),
+    multiStack = [],
+    timestamp = new Date().getTime();
+
+  if (prevInterval) {
+    generateStack(prevInterval, true);
+  }
+
+  generateStack(interval);
+  db.multi(multiStack, cb);
+
+  function generateStack(interval, rem) {
+    var i = 0,
+      l = 1440; // minutes per day
+
+    for (; i < l; i += interval) {
+      if (i === 0) {
+        continue;
+      }
+      multiStack.push({
+        operation: rem ? 'zrem' : 'zadd',
+        topic: 'time:' + i,
+        id: userid,
+        score: timestamp
+      });
+    }
+  }
 };
 
 // ----------------
@@ -81,38 +111,27 @@ var pUpdate = function(options, callback) {
         cb('User not found');
       } else {
         userinfo = response;
-        if (opts.feeds) {
-          workflow.emit('feedsWork');
-        } else {
-          workflow.emit('updateUserInfo');
-        }
+        workflow.emit('fillMinutes');
       }
     });
   });
 
-  workflow.on('feedsWork', function() {
-    if (userinfo.feeds && userinfo.feeds !== opts.feeds) {
-      // remove user from previous group
-      db.zrem('users:' + getFeedsName(userinfo.feeds), userinfo.id, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          addUserToNewGroup();
-        }
-      });
-    } else {
-      addUserToNewGroup();
-    }
-
-    function addUserToNewGroup() {
-      var groupName = _.escape(getFeedsName(opts.feeds));
-      db.zadd('users:' + groupName, 0, userinfo.id, function(err) {
+  workflow.on('fillMinutes', function() {
+    var feeds = opts.feeds || userinfo.feeds;
+    if (feeds && (userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds))) {
+      fillMinutes({
+        userid: userid,
+        interval: opts.notifyInterval,
+        prevInterval: userinfo.notifyInterval
+      }, function(err) {
         if (err) {
           cb(err);
         } else {
           workflow.emit('updateUserInfo');
         }
       });
+    } else {
+      workflow.emit('updateUserInfo');
     }
   });
 
@@ -120,17 +139,24 @@ var pUpdate = function(options, callback) {
     _.each(opts, function(value, key) {
       opts[key] = _.escape(value);
     });
+    // collect all users feeds for statistics
+    if (opts.feeds !== userinfo.feeds) {
+      if (!userinfo.prevFeeds) {
+        userinfo.prevFeeds = [];
+      }
+      userinfo.prevFeeds.push(userinfo.feeds);
+      userinfo.prevFeeds = _.uniq(userinfo.prevFeeds);
+    }
     userinfo = _.extend(userinfo, opts, {
       updated: new Date().toISOString()
     });
-    db.hset('users', userid, userinfo, function(err, response) {
+    db.hset('users', userid, userinfo, function(err) {
       if (err) {
         cb(err);
       } else {
-        //responseSend(res, null, {
-        //  success: true
-        //});
-        cb(null, userinfo);
+        cb(null, {
+          success: true
+        });
       }
     });
   });

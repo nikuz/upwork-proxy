@@ -44,7 +44,8 @@ var pUpdate = function(req, res) {
     workload: body.workload,
     notifyInterval: body.notifyInterval,
     notifyDisabled: body.notifyDisabled,
-    useProxy: body.useProxy
+    useProxy: body.useProxy,
+    last_job_date: body.last_job_date
   }, function(err, response) {
     var result = {};
     if (err) {
