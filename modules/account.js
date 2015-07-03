@@ -140,7 +140,7 @@ var pUpdate = function(options, callback) {
       opts[key] = _.escape(value);
     });
     // collect all users feeds for statistics
-    if (opts.feeds !== userinfo.feeds) {
+    if (opts.feeds !== userinfo.feeds && userinfo.feeds !== null) {
       if (!userinfo.prevFeeds) {
         userinfo.prevFeeds = [];
       }

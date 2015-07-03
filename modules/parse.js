@@ -84,7 +84,7 @@ var pSend = function(options, callback) {
   async.each(notifications, function(item, internalCallback) {
     var query = new Parse.Query(Parse.Installation);
     query.equalTo('channels', {
-      $in: [item.userid]
+      $in: ['user-' + item.userid]
     });
     Parse.Push.send({
       where: query,
