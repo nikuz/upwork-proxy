@@ -11,14 +11,19 @@ var fillMinutes = function(options, callback) {
     userid = opts.userid,
     interval = Number(opts.interval),
     prevInterval = Number(opts.prevInterval),
+    disable = opts.disable,
     multiStack = [],
     timestamp = new Date().getTime();
 
-  if (prevInterval) {
-    generateStack(prevInterval, true);
-  }
+  if (disable) {
+    generateStack(interval, true);
+  } else {
+    if (prevInterval) {
+      generateStack(prevInterval, true);
+    }
 
-  generateStack(interval);
+    generateStack(interval);
+  }
   db.multi(multiStack, cb);
 
   function generateStack(interval, rem) {
@@ -118,7 +123,21 @@ var pUpdate = function(options, callback) {
 
   workflow.on('fillMinutes', function() {
     var feeds = opts.feeds || userinfo.feeds;
-    if (feeds && (userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds))) {
+    // if user disable notifications
+    if (opts.notifyAllow === 'false' && userinfo.notifyAllow === 'true' && userinfo.feeds) {
+      fillMinutes({
+        userid: userid,
+        interval: opts.notifyInterval,
+        disable: true
+      }, function(err) {
+        if (err) {
+          cb(err);
+        } else {
+          workflow.emit('updateUserInfo');
+        }
+      });
+      // if user enable notifications
+    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || userinfo.notifyAllow === 'false')) {
       fillMinutes({
         userid: userid,
         interval: opts.notifyInterval,

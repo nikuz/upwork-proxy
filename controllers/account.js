@@ -18,7 +18,7 @@ var pCreate = function(req, res) {
     jobType: body.jobType,
     workload: body.workload,
     notifyInterval: body.notifyInterval,
-    notifyDisabled: body.notifyDisabled,
+    notifyAllow: body.notifyAllow,
     useProxy: body.useProxy
   }, function(err, response) {
     var result = {};
@@ -43,7 +43,7 @@ var pUpdate = function(req, res) {
     jobType: body.jobType,
     workload: body.workload,
     notifyInterval: body.notifyInterval,
-    notifyDisabled: body.notifyDisabled,
+    notifyAllow: body.notifyAllow,
     useProxy: body.useProxy,
     last_job_date: body.last_job_date
   }, function(err, response) {
