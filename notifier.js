@@ -7,7 +7,7 @@ var startTime = new Date().getTime(),
   config = require('./config.json'),
   upwork = require('./modules/upwork'),
   email = require('./modules/email')(),
-  parse = require('./modules/parse');
+  notifications = require('./modules/notifications');
 
 var filterJobs = function(options) {
   var opts = options || {},
@@ -121,11 +121,9 @@ async.waterfall([
       }
     });
   },
-  function(notifications, callback) {
+  function(messages, callback) {
     // send notifications
-    parse.send({
-      notifications: notifications
-    }, callback);
+    notifications.send(messages, callback);
   }
 ], function(err) {
   var endTime = new Date().getTime(),

@@ -17,8 +17,8 @@
     "grunt-contrib-jshint": "latest",
     "grunt-jscs": "~1.2.0",
     "load-grunt-tasks": "^3.2.0",
+    "node-gcm": "^0.10.0",
     "nodemailer": "^1.4.0",
-    "parse": "^1.4.2",
     "redis": "^0.12.1",
     "underscore": "^1.8.3"
   }

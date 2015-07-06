@@ -2,14 +2,9 @@
 
 var db = require('../components/db'),
   async = require('async'),
-  Parse = require('parse').Parse,
-  config = require('../config.json');
-
-Parse.initialize(
-  config.PARSE_ID,
-  config.PARSE_KEY,
-  config.PARSE_MASTER_KEY
-);
+  gcm = require('node-gcm'),
+  config = require('../config.json'),
+  sender = new gcm.Sender(config.GCM_key);
 
 var noop = function() {};
 
@@ -76,33 +71,27 @@ var saveNotification = function(options, callback) {
 // public functions
 // ----------------
 
-var pSend = function(options, callback) {
-  var cb = callback || noop,
-    opts = options || {},
-    notifications = opts.notifications;
+var pSend = function(notifications, callback) {
+  var cb = callback || noop;
+  notifications = notifications || [];
 
   async.each(notifications, function(item, internalCallback) {
-    var query = new Parse.Query(Parse.Installation);
-    query.equalTo('channels', {
-      $in: ['user-' + item.userid]
+    var message = new gcm.Message();
+    message.addData({
+      title: 'Watch Upwork',
+      message: item.message
     });
-    Parse.Push.send({
-      where: query,
-      data: {
-        alert: item.message
-      }
-    }, {
-      success: function() {
+    sender.sendNoRetry(message, [item.userid], function(err) {
+      if (err) {
+        console.log(err);
+        internalCallback();
+      } else {
         saveNotification(item, function(err) {
           if (err) {
             console.log(err);
           }
           internalCallback();
         });
-      },
-      error: function(err) {
-        console.log(err);
-        internalCallback();
       }
     });
   }, function(err) {

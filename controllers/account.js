@@ -19,6 +19,8 @@ var pCreate = function(req, res) {
     workload: body.workload,
     notifyInterval: body.notifyInterval,
     notifyAllow: body.notifyAllow,
+    dndFrom: body.dndFrom,
+    dndTo: body.dndTo,
     useProxy: body.useProxy
   }, function(err, response) {
     var result = {};
@@ -34,7 +36,7 @@ var pCreate = function(req, res) {
 var pUpdate = function(req, res) {
   var body = req.body || {};
   account.update({
-    userid: req.params.userid,
+    id: req.params.userid,
     feeds: body.feeds,
     budgetFrom: body.budgetFrom,
     budgetTo: body.budgetTo,
@@ -44,6 +46,8 @@ var pUpdate = function(req, res) {
     workload: body.workload,
     notifyInterval: body.notifyInterval,
     notifyAllow: body.notifyAllow,
+    dndFrom: body.dndFrom,
+    dndTo: body.dndTo,
     useProxy: body.useProxy,
     last_job_date: body.last_job_date
   }, function(err, response) {

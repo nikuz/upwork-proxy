@@ -12,6 +12,9 @@ var fillMinutes = function(options, callback) {
     interval = Number(opts.interval),
     prevInterval = Number(opts.prevInterval),
     disable = opts.disable,
+    timeReg = /\d{2}:\d{2}/,
+    dndFrom = minutesDND(opts.dndFrom),
+    dndTo = minutesDND(opts.dndTo),
     multiStack = [],
     timestamp = new Date().getTime();
 
@@ -34,6 +37,13 @@ var fillMinutes = function(options, callback) {
       if (i === 0) {
         continue;
       }
+      // if generate stack to add minutes
+      // and we have "Do not disturb" interval
+      // if start hour less than stop hour, exclude time interval between start and stop
+      // otherwise exclude all minutes more than start and less than stop
+      if (!rem && !_.isNull(dndFrom) && !_.isNull(dndTo) && ((dndFrom < dndTo && i > dndFrom && i < dndTo) || (dndFrom > dndTo && i > dndFrom || i < dndTo))) {
+        continue;
+      }
       multiStack.push({
         operation: rem ? 'zrem' : 'zadd',
         topic: 'time:' + i,
@@ -41,6 +51,14 @@ var fillMinutes = function(options, callback) {
         score: timestamp
       });
     }
+  }
+
+  function minutesDND(dndTime) {
+    if (!timeReg.test(dndTime)) {
+      return null;
+    }
+    dndTime = dndTime.split(':');
+    return Number(dndTime[0]) * 60 + Number(dndTime[1]);
   }
 };
 
@@ -105,8 +123,18 @@ var pUpdate = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
     opts = options || {},
-    userid = opts.userid,
+    userid = opts.id,
     userinfo;
+
+  workflow.on('validateParams', function() {
+    var keys = _.keys(opts);
+    _.each(keys, function(key) {
+      if (_.isUndefined(opts[key])) {
+        delete opts[key];
+      }
+    });
+    workflow.emit('checkUser');
+  });
 
   workflow.on('checkUser', function() {
     db.hget('users', userid, function(err, response) {
@@ -122,35 +150,44 @@ var pUpdate = function(options, callback) {
   });
 
   workflow.on('fillMinutes', function() {
-    var feeds = opts.feeds || userinfo.feeds;
-    // if user disable notifications
+    var feeds = opts.feeds || userinfo.feeds,
+      dndFrom = opts.dndFrom,
+      dndTo = opts.dndTo,
+      fmOpts = {
+        userid: userid
+      };
+
+    // if user disable notifications when it was enabled
     if (opts.notifyAllow === 'false' && userinfo.notifyAllow === 'true' && userinfo.feeds) {
-      fillMinutes({
-        userid: userid,
-        interval: opts.notifyInterval,
-        disable: true
-      }, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          workflow.emit('updateUserInfo');
-        }
+      _.extend(fmOpts, {
+        disable: true,
+        interval: userinfo.notifyInterval
       });
-      // if user enable notifications
-    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || userinfo.notifyAllow === 'false')) {
-      fillMinutes({
-        userid: userid,
+      fill();
+      // if user initial add feeds
+      // or change notification interval
+      // or enable notifications when it was disabled
+      // or user change "Do not disturb" interval
+    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo)) {
+      _.extend(fmOpts, {
+        prevInterval: userinfo.notifyInterval,
         interval: opts.notifyInterval,
-        prevInterval: userinfo.notifyInterval
-      }, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          workflow.emit('updateUserInfo');
-        }
+        dndFrom: dndFrom,
+        dndTo: dndTo
       });
+      fill();
     } else {
       workflow.emit('updateUserInfo');
+    }
+
+    function fill() {
+      fillMinutes(fmOpts, function(err) {
+        if (err) {
+          cb(err);
+        } else {
+          workflow.emit('updateUserInfo');
+        }
+      });
     }
   });
 
@@ -163,7 +200,9 @@ var pUpdate = function(options, callback) {
       if (!userinfo.prevFeeds) {
         userinfo.prevFeeds = [];
       }
-      userinfo.prevFeeds.push(userinfo.feeds);
+      if (userinfo.feeds) {
+        userinfo.prevFeeds.push(userinfo.feeds);
+      }
       userinfo.prevFeeds = _.uniq(userinfo.prevFeeds);
     }
     userinfo = _.extend(userinfo, opts, {
@@ -180,7 +219,7 @@ var pUpdate = function(options, callback) {
     });
   });
 
-  workflow.emit('checkUser');
+  workflow.emit('validateParams');
 };
 
 // ---------
