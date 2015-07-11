@@ -72,7 +72,9 @@ var saveNotification = function(options, callback) {
 // ----------------
 
 var pSend = function(notifications, callback) {
-  var cb = callback || noop;
+  var cb = callback || noop,
+    errors = [];
+
   notifications = notifications || [];
 
   async.each(notifications, function(item, internalCallback) {
@@ -83,20 +85,20 @@ var pSend = function(notifications, callback) {
     });
     sender.sendNoRetry(message, [item.userid], function(err) {
       if (err) {
-        console.log('sendNoRetry err: ' + err);
+        errors.push('sendNoRetry err: ' + err);
         // no need to interrupt the notification sending process to other users
         internalCallback();
       } else {
         saveNotification(item, function(err) {
           if (err) {
-            console.log('saveNotification err: ' + err);
+            errors.push('saveNotification err: ' + err);
           }
           internalCallback();
         });
       }
     });
-  }, function(err) {
-    cb(err);
+  }, function() {
+    cb(errors.length ? errors : null);
   });
 };
 

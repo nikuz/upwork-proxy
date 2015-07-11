@@ -130,7 +130,7 @@ async.waterfall([
     spentTime = (endTime - startTime) / 1000;
 
   if (err) {
-    console.log('Notifier error: ' + err);
+    console.log(err);
     email.send(config.admin_email, 'Upwork proxy cron job error', err, function() {
       process.exit(1);
     });
