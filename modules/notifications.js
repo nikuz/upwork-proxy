@@ -83,12 +83,13 @@ var pSend = function(notifications, callback) {
     });
     sender.sendNoRetry(message, [item.userid], function(err) {
       if (err) {
-        console.log(err);
+        console.log('sendNoRetry err: ' + err);
+        // no need to interrupt the notification sending process to other users
         internalCallback();
       } else {
         saveNotification(item, function(err) {
           if (err) {
-            console.log(err);
+            console.log('saveNotification err: ' + err);
           }
           internalCallback();
         });

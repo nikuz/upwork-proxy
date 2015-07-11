@@ -52,7 +52,7 @@ async.waterfall([
   },
   function(curMinute, callback) {
     // get users that should get notification on current minute
-    console.log(curMinute);
+    console.log('Cur minute: ' + curMinute);
     db.intersection(['time:' + curMinute], 'users', {per_page: 0}, function(err, response) {
       if (err) {
         callback(err);
@@ -130,7 +130,7 @@ async.waterfall([
     spentTime = (endTime - startTime) / 1000;
 
   if (err) {
-    console.log(err);
+    console.log('Notifier error: ' + err);
     email.send(config.admin_email, 'Upwork proxy cron job error', err, function() {
       process.exit(1);
     });
