@@ -131,7 +131,10 @@ async.waterfall([
 
   if (err) {
     console.log(err);
-    email.send(config.admin_email, 'Upwork proxy cron job error', err, function() {
+    email.send(config.admin_email, 'Upwork proxy cron job error', err, function(err) {
+      if (err) {
+        console.log(err);
+      }
       process.exit(1);
     });
   } else {
