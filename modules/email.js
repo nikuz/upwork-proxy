@@ -19,6 +19,9 @@ exports = module.exports = function() {
 
   return {
     send: function(to, subject, text, callback) {
+      if (typeof text !== 'string') {
+        text = text.toString();
+      }
       var cb = callback || noop;
       transporter.sendMail({
         from: config.serviceName + ' <' + config.admin_email + '>',
