@@ -10,6 +10,7 @@ var jobs = require('../modules/jobs');
 var pList = function(req, res) {
   jobs.list({
     q: req.query.q,
+    title: req.query.title,
     budget: req.query.budget,
     days_posted: req.query.days_posted,
     duration: req.query.duration,

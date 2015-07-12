@@ -17,8 +17,8 @@ var pList = function(options, callback) {
     opts = options || {};
 
   workflow.on('validateParams', function() {
-    if (!opts.q) {
-      cb('`q` required');
+    if (!opts.q && !opts.title) {
+      cb('`q` or `title` required');
     } else {
       workflow.emit('getJobs');
     }
