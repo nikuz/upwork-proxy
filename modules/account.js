@@ -1,7 +1,8 @@
 'use strict';
 
 var _ = require('underscore'),
-  db = require('../components/db');
+  db = require('../components/db'),
+  crypto = require('crypto');
 
 var noop = function() {};
 
@@ -70,7 +71,9 @@ var pCreate = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
     opts = options || {},
-    userid = opts.id;
+    token = opts.id,
+    os = opts.os,
+    userid;
 
   workflow.on('validateParams', function() {
     var errors = [];
@@ -82,8 +85,15 @@ var pCreate = function(options, callback) {
     if (errors.length) {
       cb(errors);
     } else {
-      workflow.emit('checkUser');
+      workflow.emit('generateUser');
     }
+  });
+
+  workflow.on('generateUser', function() {
+    var md5sum = crypto.createHash('md5');
+    md5sum.update(token);
+    userid = md5sum.digest('hex');
+    workflow.emit('checkUser');
   });
 
   workflow.on('checkUser', function() {
@@ -103,6 +113,9 @@ var pCreate = function(options, callback) {
       opts[key] = _.escape(value);
     });
     var userInfo = _.extend(opts, {
+      id: userid,
+      push_id: token,
+      os: os,
       created: new Date().toISOString()
     });
     db.hset('users', userid, userInfo, function(err) {
@@ -110,7 +123,7 @@ var pCreate = function(options, callback) {
         cb(err);
       } else {
         cb(null, {
-          success: true
+          userid: userid
         });
       }
     });

@@ -7,7 +7,9 @@ var startTime = new Date().getTime(),
   config = require('./config.json'),
   upwork = require('./modules/upwork'),
   email = require('./modules/email')(),
-  notifications = require('./modules/notifications');
+  notifications = require('./modules/notifications'),
+  interval = 6e4, // one minute
+  sessionJob = 0;
 
 var filterJobs = function(options) {
   var opts = options || {},
@@ -39,112 +41,125 @@ var filterJobs = function(options) {
   return filteredJobs;
 };
 
-async.waterfall([
-  function(callback) {
-    // calculate current minute
-    var now = new Date(),
-      year = now.getFullYear(),
-      month = now.getMonth(),
-      day = now.getDate(),
-      today = new Date(year, month, day);
+var process = function() {
+  console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
+  async.waterfall([
+    function(callback) {
+      // calculate current minute
+      var now = new Date(),
+        year = now.getFullYear(),
+        month = now.getMonth(),
+        day = now.getDate(),
+        today = new Date(year, month, day);
 
-    callback(null, parseInt((now.getTime() - today.getTime()) / 1000 / 60, 10));
-  },
-  function(curMinute, callback) {
-    // get users that should get notification on current minute
-    console.log('Cur minute: ' + curMinute);
-    db.intersection(['time:' + curMinute], 'users', {per_page: 0}, function(err, response) {
-      if (err) {
-        callback(err);
-      } else {
-        callback(null, response.items);
-      }
-    });
-  },
-  function(users, callback) {
-    // group users by feeds
-    if (users.length) {
-      var feeds = {};
-      _.each(users, function(user) {
-        if (!feeds[user.feeds]) {
-          feeds[user.feeds] = [];
-        }
-        feeds[user.feeds].push(user);
-      });
-      users = null;
-      callback(null, feeds);
-    } else {
-      callback(true);
-    }
-  },
-  function(feeds, callback) {
-    // get new jobs
-    var notifications = [];
-    async.each(feeds, function(users, internalCallback) {
-      var feed = users[0].feeds;
-      upwork.request({
-        url: config.API_jobs_url,
-        dataType: 'json',
-        data: {
-          q: feed,
-          paging: '0;50'
-        }
-      }, function(err, response) {
+      callback(null, parseInt((now.getTime() - today.getTime()) / 1000 / 60, 10));
+    },
+    function(curMinute, callback) {
+      // get users that should get notification on current minute
+      console.log('Cur minute: ' + curMinute);
+      db.intersection(['time:' + curMinute], 'users', {per_page: 0}, function(err, response) {
         if (err) {
-          internalCallback(err);
+          callback(err);
         } else {
-          response = JSON.parse(response);
-          _.each(users, function(user) {
-            var jobs = filterJobs({
-              jobs: response.jobs,
-              user: user
-            });
-            if (jobs.length) {
-              jobs = _.sortBy(jobs, function(item) {
-                return -new Date(item.date_created).getTime();
-              });
-              notifications.push({
-                userid: user.id,
-                message: 'You have new ' + jobs.length + ' vacancies',
-                last_job_date: jobs[0].date_created
-              });
-            }
-          });
-          internalCallback();
+          callback(null, response.items);
         }
       });
-    }, function(err) {
-      if (err) {
-        callback(err);
+    },
+    function(users, callback) {
+      // group users by feeds
+      if (users.length) {
+        var feeds = {};
+        _.each(users, function(user) {
+          if (!feeds[user.feeds]) {
+            feeds[user.feeds] = [];
+          }
+          feeds[user.feeds].push(user);
+        });
+        users = null;
+        callback(null, feeds);
       } else {
-        callback(null, notifications);
+        callback('No users');
       }
-    });
-  },
-  function(messages, callback) {
-    // send notifications
-    notifications.send(messages, callback);
-  }
-], function(err) {
-  var endTime = new Date().getTime(),
-    spentTime = (endTime - startTime) / 1000;
-
-  if (err) {
-    console.log(err);
-    email.send(config.admin_email, 'Upwork proxy cron job error', err, function(err) {
-      if (err) {
-        console.log(err);
-      }
-      process.exit(1);
-    });
-  } else {
-    console.log('Done!');
-    if (spentTime > 60) {
-      email.send(config.admin_email, 'Upwork proxy cron job time', 'Spent time: ' + spentTime, function() {
-        process.exit(1);
+    },
+    function(feeds, callback) {
+      // get new jobs
+      var notifications = [];
+      async.each(feeds, function(users, internalCallback) {
+        var feed = users[0].feeds;
+        upwork.request({
+          url: config.API_jobs_url,
+          dataType: 'json',
+          data: {
+            q: feed,
+            paging: '0;50'
+          }
+        }, function(err, response) {
+          if (err) {
+            internalCallback(err);
+          } else {
+            response = JSON.parse(response);
+            _.each(users, function(user) {
+              var jobs = filterJobs({
+                jobs: response.jobs,
+                user: user
+              });
+              if (jobs.length) {
+                jobs = _.sortBy(jobs, function(item) {
+                  return -new Date(item.date_created).getTime();
+                });
+                notifications.push({
+                  userid: user.id,
+                  push_id: user.push_id,
+                  os: user.os,
+                  amount: jobs.length,
+                  message: 'You have new ' + jobs.length + ' vacancies',
+                  last_job_date: jobs[0].date_created
+                });
+              }
+            });
+            internalCallback();
+          }
+        });
+      }, function(err) {
+        if (err) {
+          callback(err);
+        } else {
+          callback(null, notifications);
+        }
       });
-    } else {
-      process.exit(1);
+    },
+    function(messages, callback) {
+      // send notifications
+      notifications.send(messages, callback);
     }
-  }
-});
+  ], function(err) {
+    var endTime = new Date().getTime(),
+      spentTime = (endTime - startTime) / 1000;
+
+    if (err) {
+      console.log(err);
+      email.send(config.admin_email, 'Upwork proxy cron job error', err);
+    } else {
+      console.log('Done!');
+      if (spentTime > 60) {
+        email.send(config.admin_email, 'Upwork proxy cron job time', 'Spent time: ' + spentTime);
+      }
+    }
+  });
+};
+
+// ----------------
+// public functions
+// ----------------
+
+var pStart = function() {
+  setInterval(process, interval);
+};
+
+// ---------
+// interface
+// ---------
+
+exports = module.exports = {
+  start: pStart
+};

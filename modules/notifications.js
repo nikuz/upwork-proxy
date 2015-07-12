@@ -3,12 +3,28 @@
 var db = require('../components/db'),
   async = require('async'),
   gcm = require('node-gcm'),
+  apn = require('apn'),
   config = require('../config.json'),
-  sender = new gcm.Sender(config.GCM_key);
+  email = require('../modules/email')(),
+  senderGCM = new gcm.Sender(config.GCM_key),
+  senderAPN = new apn.Connection({
+    cert: '/var/www/upwork-proxy/keys/cert.pem',
+    key: '/var/www/upwork-proxy/keys/key.pem',
+    ca: '/var/www/upwork-proxy/keys/entrust_2048_ca.cer',
+    production: false
+  });
+
+senderAPN.on('error', function(err) {
+  email.send(config.admin_email, 'APN error', err);
+});
+senderAPN.on('socketError', function(err) {
+  email.send(config.admin_email, 'APN socket error', err);
+});
+
 
 var noop = function() {};
 
-var saveNotification = function(options, callback) {
+var saveNotification = function(options) {
   var opts = options || {},
     userid = opts.userid,
     message = opts.message,
@@ -62,7 +78,9 @@ var saveNotification = function(options, callback) {
       db.hset('users', userid, userInfo, internalCallback);
     }
   ], function(err) {
-    callback(err);
+    if (err) {
+      email.send(config.admin_email, 'Save notification data error', err);
+    }
   });
 };
 
@@ -72,34 +90,36 @@ var saveNotification = function(options, callback) {
 // ----------------
 
 var pSend = function(notifications, callback) {
-  var cb = callback || noop,
-    errors = [];
-
+  var cb = callback || noop;
   notifications = notifications || [];
-
   async.each(notifications, function(item, internalCallback) {
-    var message = new gcm.Message();
-    message.addData({
-      title: 'Watch Upwork',
-      message: item.message
-    });
-    sender.sendNoRetry(message, [item.userid], function(err) {
-      if (err) {
-        errors.push('sendNoRetry err: ' + err);
-        // no need to interrupt the notification sending process to other users
-        internalCallback();
-      } else {
-        saveNotification(item, function(err) {
-          if (err) {
-            errors.push('saveNotification err: ' + err);
-          }
-          internalCallback();
-        });
-      }
-    });
-  }, function() {
-    cb(errors.length ? errors : null);
-  });
+    if (item.os === 'android') {
+      var message = new gcm.Message();
+      message.addData({
+        title: config.serviceName,
+        message: item.message
+      });
+      senderGCM.sendNoRetry(message, [item.push_id], function(err) {
+        if (err) {
+          email.send(config.admin_email, 'GCM error', err);
+        } else {
+          saveNotification(item);
+        }
+      });
+      internalCallback();
+    } else if (item.os === 'ios') {
+      var myDevice = new apn.Device(item.push_id),
+        note = new apn.Notification();
+
+      note.alert = item.message;
+      note.badge = item.amount;
+      note.sound = 'ping.aiff';
+
+      senderAPN.pushNotification(note, myDevice);
+      saveNotification(item);
+      internalCallback();
+    }
+  }, cb);
 };
 
 

@@ -2,7 +2,6 @@
 
 var account = require('../modules/account');
 
-
 // ----------------
 // public functions
 // ----------------
@@ -11,6 +10,7 @@ var pCreate = function(req, res) {
   var body = req.body || {};
   account.create({
     id: body.id,
+    os: body.os,
     budgetFrom: body.budgetFrom,
     budgetTo: body.budgetTo,
     daysPosted: body.daysPosted,
