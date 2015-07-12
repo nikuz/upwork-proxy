@@ -1,7 +1,6 @@
 'use strict';
 
-var startTime = new Date().getTime(),
-  _ = require('underscore'),
+var _ = require('underscore'),
   async = require('async'),
   db = require('./components/db'),
   config = require('./config.json'),
@@ -43,6 +42,7 @@ var filterJobs = function(options) {
 
 var process = function() {
   console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
+  var startTime = new Date().getTime();
   async.waterfall([
     function(callback) {
       // calculate current minute
