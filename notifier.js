@@ -140,6 +140,7 @@ var process = function() {
       console.log(err);
       email.send(config.admin_email, 'Upwork proxy cron job error', err);
     } else {
+      console.log('Spent time: ' + spentTime);
       console.log('Done!');
       if (spentTime > 60) {
         email.send(config.admin_email, 'Upwork proxy cron job time', 'Spent time: ' + spentTime);
