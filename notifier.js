@@ -79,7 +79,7 @@ var process = function() {
         callback(null, feeds);
       } else {
         console.log('No users');
-        callback();
+        callback(null, null);
       }
     },
     function(feeds, callback) {
@@ -130,7 +130,7 @@ var process = function() {
           }
         });
       } else {
-        callback();
+        callback(null, null);
       }
     },
     function(messages, callback) {
@@ -138,7 +138,7 @@ var process = function() {
         // send notifications
         notifications.send(messages, callback);
       } else {
-        callback();
+        callback(null, null);
       }
     }
   ], function(err) {
@@ -172,6 +172,7 @@ var process = function() {
 
 var pStart = function() {
   setInterval(process, interval);
+  process();
 };
 
 // ---------
