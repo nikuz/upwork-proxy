@@ -172,7 +172,6 @@ var process = function() {
 
 var pStart = function() {
   setInterval(process, interval);
-  process();
 };
 
 // ---------
