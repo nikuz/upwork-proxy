@@ -3,7 +3,7 @@
 var config = require('../config.json'),
   _ = require('underscore'),
   upwork = require('../modules/upwork'),
-  email = require('../modules/email')();
+  log = require('./log')();
 
 var noop = function() {};
 
@@ -37,7 +37,11 @@ var pList = function(options, callback) {
     }, function(err, response) {
       if (err) {
         cb(err);
-        email.send(config.admin_email, 'Upwork request error', err);
+        log.captureMessage('Upwork request error', {
+          extra: {
+            err: err
+          }
+        });
       } else {
         cb(null, response);
       }

@@ -5,7 +5,7 @@ var db = require('../components/db'),
   gcm = require('node-gcm'),
   apn = require('apn'),
   config = require('../config.json'),
-  email = require('../modules/email')(),
+  log = require('./log')(),
   senderGCM = new gcm.Sender(config.GCM_key),
   senderAPN = new apn.Connection({
     cert: '/var/www/upwork-proxy/keys/cert.pem',
@@ -15,10 +15,18 @@ var db = require('../components/db'),
   });
 
 senderAPN.on('error', function(err) {
-  email.send(config.admin_email, 'APN error', err);
+  log.captureMessage('APN error', {
+    extra: {
+      err: err
+    }
+  });
 });
 senderAPN.on('socketError', function(err) {
-  email.send(config.admin_email, 'APN socket error', err);
+  log.captureMessage('APN socket error', {
+    extra: {
+      err: err
+    }
+  });
 });
 
 
@@ -79,7 +87,11 @@ var saveNotification = function(options) {
     }
   ], function(err) {
     if (err) {
-      email.send(config.admin_email, 'Save notification data error', err);
+      log.captureMessage('Save notification data error', {
+        extra: {
+          err: err
+        }
+      });
     }
   });
 };
@@ -101,7 +113,11 @@ var pSend = function(notifications, callback) {
       });
       senderGCM.sendNoRetry(message, [item.push_id], function(err) {
         if (err) {
-          email.send(config.admin_email, 'GCM error', err);
+          log.captureMessage('GCM error', {
+            extra: {
+              err: err
+            }
+          });
         } else {
           saveNotification(item);
         }

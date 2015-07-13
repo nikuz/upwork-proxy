@@ -5,7 +5,7 @@ var _ = require('underscore'),
   db = require('./components/db'),
   config = require('./config.json'),
   upwork = require('./modules/upwork'),
-  email = require('./modules/email')(),
+  log = require('./modules/log')(),
   notifications = require('./modules/notifications'),
   interval = 6e4, // one minute
   sessionJob = 0;
@@ -147,12 +147,20 @@ var process = function() {
 
     if (err) {
       console.log(err);
-      email.send(config.admin_email, 'Upwork proxy cron job error', err);
+      log.captureMessage('Upwork proxy cron job error', {
+        extra: {
+          err: err
+        }
+      });
     } else {
       console.log('Spent time: ' + spentTime);
       console.log('Done!');
       if (spentTime > 60) {
-        email.send(config.admin_email, 'Upwork proxy cron job time', 'Spent time: ' + spentTime);
+        log.captureMessage('Upwork proxy cron job time', {
+            extra: {
+              time: 'Spent time: ' + spentTime
+            }
+        });
       }
     }
   });
