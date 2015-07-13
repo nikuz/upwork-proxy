@@ -78,59 +78,68 @@ var process = function() {
         users = null;
         callback(null, feeds);
       } else {
-        callback('No users');
+        console.log('No users');
+        callback();
       }
     },
     function(feeds, callback) {
-      // get new jobs
-      var notifications = [];
-      async.each(feeds, function(users, internalCallback) {
-        var feed = users[0].feeds;
-        upwork.request({
-          url: config.API_jobs_url,
-          dataType: 'json',
-          data: {
-            q: feed,
-            paging: '0;50'
-          }
-        }, function(err, response) {
-          if (err) {
-            internalCallback(err);
-          } else {
-            response = JSON.parse(response);
-            _.each(users, function(user) {
-              var jobs = filterJobs({
-                jobs: response.jobs,
-                user: user
+      if (feeds) {
+        // get new jobs
+        var notifications = [];
+        async.each(feeds, function(users, internalCallback) {
+          var feed = users[0].feeds;
+          upwork.request({
+            url: config.API_jobs_url,
+            dataType: 'json',
+            data: {
+              q: feed,
+              paging: '0;50'
+            }
+          }, function(err, response) {
+            if (err) {
+              internalCallback(err);
+            } else {
+              response = JSON.parse(response);
+              _.each(users, function(user) {
+                var jobs = filterJobs({
+                  jobs: response.jobs,
+                  user: user
+                });
+                if (jobs.length) {
+                  jobs = _.sortBy(jobs, function(item) {
+                    return -new Date(item.date_created).getTime();
+                  });
+                  notifications.push({
+                    userid: user.id,
+                    push_id: user.push_id,
+                    os: user.os,
+                    amount: jobs.length,
+                    message: 'You have new ' + jobs.length + ' vacancies',
+                    last_job_date: jobs[0].date_created
+                  });
+                }
               });
-              if (jobs.length) {
-                jobs = _.sortBy(jobs, function(item) {
-                  return -new Date(item.date_created).getTime();
-                });
-                notifications.push({
-                  userid: user.id,
-                  push_id: user.push_id,
-                  os: user.os,
-                  amount: jobs.length,
-                  message: 'You have new ' + jobs.length + ' vacancies',
-                  last_job_date: jobs[0].date_created
-                });
-              }
-            });
-            internalCallback();
+              internalCallback();
+            }
+          });
+        }, function(err) {
+          if (err) {
+            callback(err);
+          } else {
+            callback(null, notifications);
           }
         });
-      }, function(err) {
-        if (err) {
-          callback(err);
-        } else {
-          callback(null, notifications);
-        }
-      });
+      } else {
+        callback();
+      }
     },
     function(messages, callback) {
-      // send notifications
-      notifications.send(messages, callback);
+      if (messages) {
+        // send notifications
+        notifications.send(messages, callback);
+      } else {
+        callback();
+      }
     }
   ], function(err) {
     var endTime = new Date().getTime(),
