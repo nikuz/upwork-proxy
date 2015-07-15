@@ -7,6 +7,20 @@ var jobs = require('../modules/jobs');
 // public functions
 // ----------------
 
+var pGet = function(req, res) {
+  jobs.get({
+    id: req.params.id
+  }, function(err, response) {
+    var result = {};
+    if (err) {
+      result.error = err;
+    } else {
+      result = response;
+    }
+    res.send(result);
+  });
+};
+
 var pList = function(req, res) {
   jobs.list({
     q: req.query.q,
@@ -33,5 +47,6 @@ var pList = function(req, res) {
 // ---------
 
 exports = module.exports = {
+  get: pGet,
   list: pList
 };
