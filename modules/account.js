@@ -101,7 +101,7 @@ var pCreate = function(options, callback) {
       if (err) {
         cb(err);
       } else if(response) {
-        cb('User already exist');
+        cb(null, userid);
       } else {
         workflow.emit('saveUser');
       }
