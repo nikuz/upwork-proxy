@@ -101,7 +101,9 @@ var pCreate = function(options, callback) {
       if (err) {
         cb(err);
       } else if(response) {
-        cb(null, userid);
+        cb(null, {
+          userid: userid
+        });
       } else {
         workflow.emit('saveUser');
       }
