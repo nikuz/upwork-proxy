@@ -5,6 +5,7 @@ var _ = require('underscore'),
   db = require('./components/db'),
   config = require('./config.json'),
   upwork = require('./modules/upwork'),
+  account = require('./modules/account'),
   log = require('./modules/log')(),
   notifications = require('./modules/notifications'),
   interval = 6e4, // one minute
@@ -101,6 +102,13 @@ var process = function() {
             } else {
               response = JSON.parse(response);
               _.each(users, function(user) {
+                // if user doesn't use APP more than one day
+                if (Date.now() - new Date(user.lastlogon).getTime() > 864e5) {
+                  // remove user from notifications queue
+                  return account.disableNotifications({
+                    userid: user.id
+                  });
+                }
                 var jobs = filterJobs({
                   jobs: response.jobs,
                   user: user
@@ -109,12 +117,16 @@ var process = function() {
                   jobs = _.sortBy(jobs, function(item) {
                     return -new Date(item.date_created).getTime();
                   });
+                  var vacancyWordEnd = 'y';
+                  if (jobs.length > 1) {
+                    vacancyWordEnd = 'ies';
+                  }
                   notifications.push({
                     userid: user.id,
                     push_id: user.push_id,
                     os: user.os,
                     amount: jobs.length,
-                    message: 'You have new ' + jobs.length + ' vacancies',
+                    message: 'You have new ' + jobs.length + ' vacanc' + vacancyWordEnd,
                     last_job_date: jobs[0].date_created
                   });
                 }

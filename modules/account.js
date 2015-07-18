@@ -114,6 +114,7 @@ var pCreate = function(options, callback) {
     });
     var userInfo = _.extend(opts, {
       id: userid,
+      notifications: false,
       push_id: token,
       os: os,
       created: new Date().toISOString()
@@ -177,6 +178,7 @@ var pUpdate = function(options, callback) {
         interval: userinfo.notifyInterval
       });
       fill();
+      userinfo.notifications = false;
       // if user initial add feeds
       // or change notification interval
       // or enable notifications when it was disabled
@@ -189,6 +191,7 @@ var pUpdate = function(options, callback) {
         dndTo: dndTo
       });
       fill();
+      userinfo.notifications = true;
     } else {
       workflow.emit('updateUserInfo');
     }
@@ -235,11 +238,135 @@ var pUpdate = function(options, callback) {
   workflow.emit('validateParams');
 };
 
+var pDisableNotifications = function(options, callback) {
+  var workflow = new(require('events').EventEmitter)(),
+    cb = callback || noop,
+    opts = options || {},
+    userid = opts.userid,
+    userinfo;
+
+  workflow.on('validateParams', function() {
+    if (!userid) {
+      cb('`userid` is required');
+    } else {
+      workflow.emit('checkUser');
+    }
+  });
+
+  workflow.on('checkUser', function() {
+    db.hget('users', userid, function(err, response) {
+      if (err) {
+        cb(err);
+      } else if(!response) {
+        cb('User not found');
+      } else {
+        userinfo = response;
+        workflow.emit('disableNotifications');
+      }
+    });
+  });
+
+  workflow.on('disableNotifications', function() {
+    fillMinutes({
+      userid: userid,
+      interval: userinfo.notifyInterval,
+      disable: true
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('saveUserInfo');
+      }
+    });
+  });
+
+  workflow.on('saveUserInfo', function() {
+    userinfo.notifications = false;
+    db.hset('users', userid, userinfo, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          success: true
+        });
+      }
+    });
+  });
+
+  workflow.emit('validateParams');
+};
+
+var pActivityIncrease = function(options, callback) {
+  var workflow = new(require('events').EventEmitter)(),
+    cb = callback || noop,
+    opts = options || {},
+    userid = opts.userid,
+    userinfo;
+
+  workflow.on('validateParams', function() {
+    if (!userid) {
+      cb('`userid` is required');
+    } else {
+      workflow.emit('checkUser');
+    }
+  });
+
+  workflow.on('checkUser', function() {
+    db.hget('users', userid, function(err, response) {
+      if (err) {
+        cb(err);
+      } else if(!response) {
+        cb('User not found');
+      } else {
+        userinfo = response;
+        workflow.emit('checkNotifications');
+      }
+    });
+  });
+
+  workflow.on('checkNotifications', function() {
+    if (userinfo.notifications === false && userinfo.notifyAllow === 'true') {
+      userinfo.notifications = true;
+      fillMinutes({
+        userid: userid,
+        interval: userinfo.notifyInterval,
+        dndFrom: userinfo.dndFrom,
+        dndTo: userinfo.dndTo
+      }, function(err) {
+        if (err) {
+          cb(err);
+        } else {
+          workflow.emit('increaseActivity');
+        }
+      });
+    } else {
+      workflow.emit('increaseActivity');
+    }
+  });
+
+  workflow.on('increaseActivity', function() {
+    userinfo.lastlogon = new Date().toISOString();
+    db.hset('users', userid, userinfo, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          success: true
+        });
+      }
+    });
+  });
+
+  workflow.emit('validateParams');
+};
+
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
   create: pCreate,
-  update: pUpdate
+  update: pUpdate,
+  activityIncrease: pActivityIncrease,
+  disableNotifications: pDisableNotifications
 };
