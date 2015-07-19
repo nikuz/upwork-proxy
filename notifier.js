@@ -102,8 +102,8 @@ var process = function() {
             } else {
               response = JSON.parse(response);
               _.each(users, function(user) {
-                // if user doesn't use APP more than one day
-                if (Date.now() - new Date(user.updated).getTime() > 864e5) {
+                // if user doesn't use APP more than two days
+                if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
                   // remove user from notifications queue
                   return account.disableNotifications({
                     userid: user.id
