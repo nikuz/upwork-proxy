@@ -30,8 +30,7 @@ var pList = function(req, res) {
     duration: req.query.duration,
     job_type: req.query.job_type,
     workload: req.query.workload,
-    paging: req.query.paging,
-    userid: req.query.userid
+    paging: req.query.paging
   }, function(err, response) {
     var result = {};
     if (err) {

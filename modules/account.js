@@ -173,19 +173,19 @@ var pUpdate = function(options, callback) {
         userid: userid
       };
 
-    // if user disable notifications when it was enabled
     if (opts.notifyAllow === 'false' && userinfo.notifyAllow === 'true' && userinfo.feeds) {
+      // if user disable notifications when it was enabled
       _.extend(fmOpts, {
         disable: true,
         interval: userinfo.notifyInterval
       });
       fill();
       userinfo.notifications = false;
+    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo)) {
       // if user initial add feeds
       // or change notification interval
       // or enable notifications when it was disabled
       // or user change "Do not disturb" interval
-    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo)) {
       _.extend(fmOpts, {
         prevInterval: userinfo.notifyInterval,
         interval: opts.notifyInterval,
@@ -194,6 +194,14 @@ var pUpdate = function(options, callback) {
       });
       fill();
       userinfo.notifications = true;
+    } else if (feeds && userinfo.notifications === false && opts.notifyAllow === 'true') {
+      // if user long time don't use the APP, and then again opens it
+      _.extend(fmOpts, {
+        interval: userinfo.notifyInterval,
+        dndFrom: dndFrom,
+        dndTo: dndTo
+      });
+      fill();
     } else {
       workflow.emit('updateUserInfo');
     }
@@ -298,70 +306,6 @@ var pDisableNotifications = function(options, callback) {
   workflow.emit('validateParams');
 };
 
-var pActivityIncrease = function(options, callback) {
-  var workflow = new(require('events').EventEmitter)(),
-    cb = callback || noop,
-    opts = options || {},
-    userid = opts.userid,
-    userinfo;
-
-  workflow.on('validateParams', function() {
-    if (!userid) {
-      cb('`userid` is required');
-    } else {
-      workflow.emit('checkUser');
-    }
-  });
-
-  workflow.on('checkUser', function() {
-    db.hget('users', userid, function(err, response) {
-      if (err) {
-        cb(err);
-      } else if(!response) {
-        cb('User not found');
-      } else {
-        userinfo = response;
-        workflow.emit('checkNotifications');
-      }
-    });
-  });
-
-  workflow.on('checkNotifications', function() {
-    if (userinfo.notifications === false && userinfo.notifyAllow === 'true') {
-      userinfo.notifications = true;
-      fillMinutes({
-        userid: userid,
-        interval: userinfo.notifyInterval,
-        dndFrom: userinfo.dndFrom,
-        dndTo: userinfo.dndTo
-      }, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          workflow.emit('increaseActivity');
-        }
-      });
-    } else {
-      workflow.emit('increaseActivity');
-    }
-  });
-
-  workflow.on('increaseActivity', function() {
-    userinfo.lastlogon = new Date().toISOString();
-    db.hset('users', userid, userinfo, function(err) {
-      if (err) {
-        cb(err);
-      } else {
-        cb(null, {
-          success: true
-        });
-      }
-    });
-  });
-
-  workflow.emit('validateParams');
-};
-
 // ---------
 // interface
 // ---------
@@ -369,6 +313,5 @@ var pActivityIncrease = function(options, callback) {
 exports = module.exports = {
   create: pCreate,
   update: pUpdate,
-  activityIncrease: pActivityIncrease,
   disableNotifications: pDisableNotifications
 };

@@ -109,7 +109,8 @@ var pSend = function(notifications, callback) {
       var message = new gcm.Message();
       message.addData({
         title: config.serviceName,
-        message: item.message
+        message: item.message,
+        last_job_date: item.last_job_date
       });
       senderGCM.sendNoRetry(message, [item.push_id], function(err) {
         if (err) {
@@ -130,6 +131,9 @@ var pSend = function(notifications, callback) {
       note.alert = item.message;
       note.badge = item.amount;
       note.sound = 'ping.aiff';
+      note.payload = {
+        last_job_date: item.last_job_date
+      };
 
       senderAPN.pushNotification(note, myDevice);
       saveNotification(item);

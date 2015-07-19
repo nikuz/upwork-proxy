@@ -61,26 +61,11 @@ var pUpdate = function(req, res) {
   });
 };
 
-var pActivity = function(req, res) {
-  account.activityIncrease({
-    userid: req.params.userid
-  }, function(err, response) {
-    var result = {};
-    if (err) {
-      result.error = err;
-    } else {
-      result = response;
-    }
-    res.send(result);
-  });
-};
-
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
   create: pCreate,
-  update: pUpdate,
-  activity: pActivity
+  update: pUpdate
 };

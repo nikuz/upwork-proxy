@@ -3,8 +3,7 @@
 var config = require('../config.json'),
   _ = require('underscore'),
   upwork = require('../modules/upwork'),
-  log = require('./log')(),
-  account = require('./account');
+  log = require('./log')();
 
 var noop = function() {};
 
@@ -49,8 +48,7 @@ var pGet = function(options, callback) {
 var pList = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
-    opts = options || {},
-    userid = opts.userid;
+    opts = options || {};
 
   workflow.on('validateParams', function() {
     if (!opts.q && !opts.title) {
@@ -80,11 +78,6 @@ var pList = function(options, callback) {
         });
       } else {
         cb(null, response);
-
-        // save user's last activity time
-        account.activityIncrease({
-          userid: userid
-        });
       }
     });
   });
