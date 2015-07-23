@@ -25,12 +25,14 @@ var pList = function(req, res) {
   jobs.list({
     q: req.query.q,
     title: req.query.title,
+    skills: req.query.skills,
     budget: req.query.budget,
     days_posted: req.query.days_posted,
     duration: req.query.duration,
     job_type: req.query.job_type,
     workload: req.query.workload,
-    paging: req.query.paging
+    paging: req.query.paging,
+    sort: req.query.sort
   }, function(err, response) {
     var result = {};
     if (err) {
