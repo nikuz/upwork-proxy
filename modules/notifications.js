@@ -8,8 +8,8 @@ var db = require('../components/db'),
   log = require('./log')(),
   senderGCM = new gcm.Sender(config.GCM_key),
   senderAPN = new apn.Connection({
-    cert: '/var/www/upwork-proxy/keys/cert.pem',
-    key: '/var/www/upwork-proxy/keys/key.pem',
+    cert: '/var/www/upwork-proxy/keys/deploy-cert.pem',
+    key: '/var/www/upwork-proxy/keys/deploy-key.pem',
     ca: '/var/www/upwork-proxy/keys/entrust_2048_ca.cer',
     production: false
   });
