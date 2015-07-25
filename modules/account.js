@@ -2,7 +2,9 @@
 
 var _ = require('underscore'),
   db = require('../components/db'),
-  crypto = require('crypto');
+  crypto = require('crypto'),
+  log = require('./log')(),
+  timeZones = require('../data/timezones');
 
 var noop = function() {};
 
@@ -12,6 +14,8 @@ var fillMinutes = function(options, callback) {
     userid = opts.userid,
     interval = Number(opts.interval),
     prevInterval = Number(opts.prevInterval),
+    timezone = opts.timezone,
+    prevTimezone = opts.prevTimezone,
     disable = opts.disable,
     timeReg = /\d{2}:\d{2}/,
     dndFrom = minutesDND(opts.dndFrom),
@@ -19,16 +23,25 @@ var fillMinutes = function(options, callback) {
     multiStack = [],
     timestamp = new Date().getTime();
 
-  if (disable) {
-    generateStack(interval, true);
-  } else {
-    if (prevInterval) {
-      generateStack(prevInterval, true);
-    }
+  if (_.contains(timeZones, timezone)) {
+    if (disable) {
+      generateStack(interval, true);
+    } else {
+      if (prevInterval || prevTimezone) {
+        generateStack(prevInterval || interval, true);
+      }
 
-    generateStack(interval);
+      generateStack(interval);
+    }
+    db.multi(multiStack, cb);
+  } else {
+    log.captureMessage('Nonexistent time zone', {
+      extra: {
+        timezone: timezone
+      }
+    });
+    cb('Nonexistent time zone');
   }
-  db.multi(multiStack, cb);
 
   function generateStack(interval, rem) {
     var i = 0,
@@ -42,12 +55,12 @@ var fillMinutes = function(options, callback) {
       // and we have "Do not disturb" interval
       // if start hour less than stop hour, exclude time interval between start and stop
       // otherwise exclude all minutes more than start and less than stop
-      if (!rem && !_.isNull(dndFrom) && !_.isNull(dndTo) && ((dndFrom < dndTo && i > dndFrom && i < dndTo) || (dndFrom > dndTo && i > dndFrom || i < dndTo))) {
+      if (!rem && !_.isNull(dndFrom) && !_.isNull(dndTo) && ((dndFrom < dndTo && i > dndFrom && i < dndTo) || (dndFrom > dndTo && (i > dndFrom || i < dndTo)))) {
         continue;
       }
       multiStack.push({
         operation: rem ? 'zrem' : 'zadd',
-        topic: 'time:' + i,
+        topic: 'time:' + (rem ? prevTimezone || timezone : timezone) + ':' + i,
         id: userid,
         score: timestamp
       });
@@ -177,18 +190,22 @@ var pUpdate = function(options, callback) {
       // if user disable notifications when it was enabled
       _.extend(fmOpts, {
         disable: true,
-        interval: userinfo.notifyInterval
+        interval: userinfo.notifyInterval,
+        timezone: userinfo.timezone
       });
       fill();
       userinfo.notifications = false;
-    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo)) {
+    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo || opts.timezone !== userinfo.timezone)) {
       // if user initial add feeds
-      // or change notification interval
-      // or enable notifications when it was disabled
-      // or user change "Do not disturb" interval
+      // or changed notification interval
+      // or enabled notifications when it was disabled
+      // or changed "Do not disturb" interval
+      // or changed user's timezone
       _.extend(fmOpts, {
         prevInterval: userinfo.notifyInterval,
         interval: opts.notifyInterval,
+        timezone: opts.timezone,
+        prevTimezone: opts.timezone !== userinfo.timezone ? userinfo.timezone : null,
         dndFrom: dndFrom,
         dndTo: dndTo
       });
@@ -197,7 +214,8 @@ var pUpdate = function(options, callback) {
     } else if (feeds && userinfo.notifications === false && opts.notifyAllow === 'true') {
       // if user long time don't use the APP, and then again opens it
       _.extend(fmOpts, {
-        interval: userinfo.notifyInterval,
+        interval: opts.notifyInterval,
+        timezone: opts.timezone,
         dndFrom: dndFrom,
         dndTo: dndTo
       });

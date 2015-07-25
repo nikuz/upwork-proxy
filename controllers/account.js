@@ -21,7 +21,8 @@ var pCreate = function(req, res) {
     notifyAllow: body.notifyAllow,
     dndFrom: body.dndFrom,
     dndTo: body.dndTo,
-    useProxy: body.useProxy
+    useProxy: body.useProxy,
+    timezone: body.timezone
   }, function(err, response) {
     var result = {};
     if (err) {
@@ -49,7 +50,8 @@ var pUpdate = function(req, res) {
     dndFrom: body.dndFrom,
     dndTo: body.dndTo,
     useProxy: body.useProxy,
-    last_job_date: body.last_job_date
+    last_job_date: body.last_job_date,
+    timezone: body.timezone
   }, function(err, response) {
     var result = {};
     if (err) {

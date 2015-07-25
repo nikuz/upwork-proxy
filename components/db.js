@@ -4,8 +4,12 @@ var _ = require('underscore'),
   async = require('async'),
   config = require('../config.json'),
   redis = require('redis'),
-  db = redis.createClient(),
-  dbPrefix = config.db_prefix;
+  dbPrefix = config.db_prefix,
+  db;
+
+if (!db) {
+  db = redis.createClient();
+}
 
 var noop = function() {};
 
@@ -58,82 +62,6 @@ var getMembers = function(topic, members, options, callback) {
   });
 };
 
-var muilti = function(operations, meta, callback) {
-  var cb = callback || noop,
-    multi = db.multi(),
-    operationsMap = {
-      hget: 'hget',
-      hgetall: 'hgetall',
-      hset: 'hset',
-      hlen: 'hlen',
-      hrem: 'hdel',
-      zadd: 'zadd',
-      zrem: 'zrem',
-      zincrby: 'zincrby',
-      zcount: 'zcount',
-      zrange: 'zrange',
-      del: 'del'
-    };
-
-  if (!_.isArray(operations)) {
-    cb(constants.keys.ARRAY_REQUIRED, null);
-    return;
-  }
-
-  _.each(operations, function(oItem) {
-    var operationType = operationsMap[oItem.operation];
-
-    if (!operationType) {
-      cb(constants.keys.METHOD_NOT_EXIST);
-      return;
-    }
-
-    var topicPrefix = '';
-    if (!meta) {
-      topicPrefix = (operationType === 'del' ? 'z' : operationType.substr(0, 1)) + ':';
-    }
-    var topic = dbPrefix + topicPrefix + oItem.topic;
-
-    switch (operationType) {
-      case 'hget':
-        multi[operationType](topic, oItem.id);
-        break;
-      case 'hgetall':
-        multi[operationType](topic);
-        break;
-      case 'hset':
-        multi[operationType](topic, oItem.id, oItem.data);
-        break;
-      case 'hlen':
-        multi[operationType](topic);
-        break;
-      case 'hdel':
-        multi[operationType](topic, oItem.id);
-        break;
-      case 'zadd':
-        multi[operationType](topic, oItem.score, oItem.id);
-        break;
-      case 'zrem':
-        multi[operationType](topic, oItem.id);
-        break;
-      case 'zincrby':
-        multi[operationType](topic, oItem.score || 1, oItem.id);
-        break;
-      case 'zcount':
-        multi[operationType](topic, '-inf', '+inf');
-        break;
-      case 'zrange':
-        multi[operationType](topic, oItem.start, oItem.end);
-        break;
-      case 'del':
-        multi[operationType](topic);
-        break;
-      default:
-    }
-  });
-  multi.exec(cb);
-};
-
 db.on("error", function (err) {
   console.log("DB Error: " + err);
 });
@@ -143,11 +71,28 @@ db.on("error", function (err) {
 // ----------------
 
 var pMulti = function(operations, callback) {
-  muilti(operations, false, callback);
-};
+  var cb = callback || noop,
+    multi = db.multi();
 
-var pMetaMulti = function(operations, callback) {
-  muilti(operations, true, callback);
+  if (!_.isArray(operations)) {
+    cb(constants.keys.ARRAY_REQUIRED, null);
+    return;
+  }
+
+  _.each(operations, function(oItem) {
+    var operation = oItem.operation,
+      topic = dbPrefix + 'z:' + oItem.topic;
+
+    switch (operation) {
+      case 'zadd':
+        multi[operation](topic, oItem.score, oItem.id);
+        break;
+      case 'zrem':
+        multi[operation](topic, oItem.id);
+        break;
+    }
+  });
+  multi.exec(cb);
 };
 
 var pHget = function(topic, id, callback) {
@@ -191,37 +136,25 @@ var pZall = function(topic, callback) {
   db.zrevrange(dbPrefix + 'z:' + topic, 0, -1, cb);
 };
 
-var pIntersection = function(topics, metatopic, options, callback) {
+var pUnion = function(topics, metatopic, callback) {
   var cb = callback || noop,
-    opts = options || {},
-    showAll = opts.per_page === 0,
-    start = showAll ? 0 : (opts.start || 0),
-    end = showAll ? -1 : (_.isUndefined(opts.end) ? opts.end : 19),
-    weights = opts.weights,
+    opts = {},
     tags = [],
     cmd,
-    orderFunction;
-  if (_.isArray(topics) && topics.length && metatopic) {
+    tmp = 'tmp:union:' + new Date().getTime();
+
+  if (_.isArray(topics) && metatopic) {
     _.each(topics, function(topic) {
       tags.push(dbPrefix + 'z:' + topic);
     });
-    var tmp = 'tmp:intersection:' + new Date().getTime();
     cmd = [dbPrefix + tmp, tags.length].concat(tags);
-    if (_.isArray(weights) && weights.length === topics.length) {
-      cmd = cmd.concat('weights', weights);
-    }
-    db.ZINTERSTORE(cmd, function(err, total) {
+    db.zunionstore(cmd, function(err, total) {
       if (err) {
         cb(err);
       } else {
-        orderFunction = opts.ascending ? 'zrange' : 'zrevrange';
-        db[orderFunction](dbPrefix + tmp, start, end, 'withscores', function(err, members) {
-          if (err) {
-            cb(err);
-          } else {
-            opts.total = parseInt(total, 10);
-            getMembers(metatopic, members, opts, cb);
-          }
+        db.zrange(dbPrefix + tmp, 0, -1, 'withscores', function(err, members) {
+          opts.total = parseInt(total, 10);
+          getMembers(metatopic, members, opts, cb);
           db.del(dbPrefix + tmp);
         });
       }
@@ -253,13 +186,12 @@ var pFlushall = function(callback) {
 
 exports = module.exports = {
   multi: pMulti,
-  metaMulti: pMetaMulti,
   hget: pHget,
   hset: pHset,
   zadd: pZadd,
   zrem: pZrem,
   zall: pZall,
-  intersection: pIntersection,
+  union: pUnion,
   counter: pCounter,
   flushall: pFlushall
 };

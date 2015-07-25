@@ -36,7 +36,7 @@ var saveNotification = function(options) {
   var opts = options || {},
     userid = opts.userid,
     message = opts.message,
-    last_job_date = opts.last_job_date,
+    last_job_date = opts.firstJob.last_job_date,
     notificationId,
     userInfo,
     date = new Date();
@@ -105,12 +105,13 @@ var pSend = function(notifications, callback) {
   var cb = callback || noop;
   notifications = notifications || [];
   async.each(notifications, function(item, internalCallback) {
+    var messageText = item.firstJob.title.substring(0, 100);
     if (item.os === 'android') {
       var message = new gcm.Message();
       message.addData({
         title: config.serviceName,
-        message: item.message,
-        last_job_date: item.last_job_date
+        message: messageText,
+        last_job_date: item.firstJob.last_job_date
       });
       senderGCM.sendNoRetry(message, [item.push_id], function(err) {
         if (err) {
@@ -128,15 +129,17 @@ var pSend = function(notifications, callback) {
       var myDevice = new apn.Device(item.push_id),
         note = new apn.Notification();
 
-      note.alert = item.message;
+      note.alert = messageText;
       note.badge = item.amount;
       note.sound = 'ping.aiff';
       note.payload = {
-        last_job_date: item.last_job_date
+        last_job_date: item.firstJob.last_job_date
       };
 
       senderAPN.pushNotification(note, myDevice);
       saveNotification(item);
+      internalCallback();
+    } else {
       internalCallback();
     }
   }, cb);

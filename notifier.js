@@ -8,7 +8,8 @@ var _ = require('underscore'),
   account = require('./modules/account'),
   log = require('./modules/log')(),
   notifications = require('./modules/notifications'),
-  interval = 6e4, // one minute
+  timeZones = require('./data/timezones'),
+  interval = 6e4 * 5, // 5 minutes
   sessionJob = 0;
 
 var filterJobs = function(options) {
@@ -46,19 +47,29 @@ var process = function() {
   var startTime = new Date().getTime();
   async.waterfall([
     function(callback) {
-      // calculate current minute
-      var now = new Date(),
-        year = now.getFullYear(),
-        month = now.getMonth(),
-        day = now.getDate(),
-        today = new Date(year, month, day);
+      // calculate current minutes in all time zones
+      var today = new Date(),
+        curUTCMinute = today.getUTCHours() * 60 + today.getUTCMinutes(),
+        minutesPerDay = 1440,
+        minutes = [];
 
-      callback(null, parseInt((now.getTime() - today.getTime()) / 1000 / 60, 10));
+      console.log('Cur UTC minute: ' + curUTCMinute);
+
+      _.each(timeZones, function(zone) {
+        var zoneMinute = curUTCMinute + Number(zone);
+        if (zoneMinute < 0) {
+          zoneMinute = minutesPerDay - Math.abs(zoneMinute);
+        } else if (zoneMinute > minutesPerDay) {
+          zoneMinute = zoneMinute - minutesPerDay;
+        }
+        minutes.push('time:' + zone + ':' + zoneMinute);
+      });
+
+      callback(null, minutes);
     },
-    function(curMinute, callback) {
-      // get users that should get notification on current minute
-      console.log('Cur minute: ' + curMinute);
-      db.intersection(['time:' + curMinute], 'users', {per_page: 0}, function(err, response) {
+    function(curMinutes, callback) {
+      // get users that should get notification on current minutes
+      db.union(curMinutes, 'users', function(err, response) {
         if (err) {
           callback(err);
         } else {
@@ -94,7 +105,8 @@ var process = function() {
             dataType: 'json',
             data: {
               q: feed,
-              paging: '0;50'
+              paging: '0;50',
+              sort: 'create_time desc'
             }
           }, function(err, response) {
             if (err) {
@@ -114,20 +126,12 @@ var process = function() {
                   user: user
                 });
                 if (jobs.length) {
-                  jobs = _.sortBy(jobs, function(item) {
-                    return -new Date(item.date_created).getTime();
-                  });
-                  var vacancyWordEnd = 'y';
-                  if (jobs.length > 1) {
-                    vacancyWordEnd = 'ies';
-                  }
                   notifications.push({
                     userid: user.id,
                     push_id: user.push_id,
                     os: user.os,
                     amount: jobs.length,
-                    message: 'You have new ' + jobs.length + ' vacanc' + vacancyWordEnd,
-                    last_job_date: jobs[0].date_created
+                    firstJob: jobs[0]
                   });
                 }
               });
