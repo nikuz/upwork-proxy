@@ -50,7 +50,7 @@ var process = function() {
       // calculate current minutes in all time zones
       var today = new Date(),
         curUTCMinute = today.getUTCHours() * 60 + today.getUTCMinutes(),
-        minutesPerDay = 1440,
+        minutesPerDay = 1440, // minutes per day
         minutes = [];
 
       console.log('Cur UTC minute: ' + curUTCMinute);
@@ -187,7 +187,23 @@ var process = function() {
 // ----------------
 
 var pStart = function() {
-  setInterval(process, interval);
+  var today = new Date(),
+    i = today.getUTCHours() * 60 + today.getUTCMinutes(),
+    l = 1440, // minutes per day
+    s = today.getUTCSeconds(),
+    timeToStartCron = 0;
+
+  for (; i <= l; i += 1) {
+    if (i % 5 === 0) {
+      break;
+    }
+    timeToStartCron += 1;
+  }
+  setTimeout(function() {
+    console.log('Start cron job in %s', new Date());
+    process();
+    setInterval(process, interval);
+  }, 6e4 * timeToStartCron - s * 1000);
 };
 
 // ---------
