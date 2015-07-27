@@ -80,6 +80,7 @@ var process = function() {
     function(users, callback) {
       // group users by feeds
       if (users.length) {
+        console.log('Users to delivery: %d', users.length);
         var feeds = {};
         _.each(users, function(user) {
           if (!feeds[user.feeds]) {
@@ -150,8 +151,9 @@ var process = function() {
       }
     },
     function(messages, callback) {
-      if (messages) {
+      if (messages && messages.length) {
         // send notifications
+        console.log('Notifications to delivery: %d', messages.length);
         notifications.send(messages, callback);
       } else {
         callback(null, null);
