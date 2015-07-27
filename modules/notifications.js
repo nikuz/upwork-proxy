@@ -11,7 +11,7 @@ var db = require('../components/db'),
     cert: '/var/www/upwork-proxy/keys/deploy-cert.pem',
     key: '/var/www/upwork-proxy/keys/deploy-key.pem',
     ca: '/var/www/upwork-proxy/keys/entrust_2048_ca.cer',
-    production: false
+    production: true
   });
 
 senderAPN.on('error', function(err) {
@@ -36,7 +36,7 @@ var saveNotification = function(options) {
   var opts = options || {},
     userid = opts.userid,
     message = opts.message,
-    last_job_date = opts.firstJob.last_job_date,
+    last_job_date = opts.firstJob.date_created,
     notificationId,
     userInfo,
     date = new Date();
@@ -106,12 +106,12 @@ var pSend = function(notifications, callback) {
   notifications = notifications || [];
   async.each(notifications, function(item, internalCallback) {
     var messageText = item.firstJob.title.substring(0, 100);
-    if (item.os === 'android') {
+    if (item.os === 'android' && item.push_id.length > 0) {
       var message = new gcm.Message();
       message.addData({
         title: config.serviceName,
         message: messageText,
-        last_job_date: item.firstJob.last_job_date
+        last_job_date: item.firstJob.date_created
       });
       senderGCM.sendNoRetry(message, [item.push_id], function(err) {
         if (err) {
@@ -125,7 +125,8 @@ var pSend = function(notifications, callback) {
         }
       });
       internalCallback();
-    } else if (item.os === 'ios') {
+    } else if (item.os === 'ios' && item.push_id.length > 0) {
+      console.log(item.push_id);
       var myDevice = new apn.Device(item.push_id),
         note = new apn.Notification();
 
@@ -133,7 +134,7 @@ var pSend = function(notifications, callback) {
       note.badge = item.amount;
       note.sound = 'ping.aiff';
       note.payload = {
-        last_job_date: item.firstJob.last_job_date
+        last_job_date: item.firstJob.date_created
       };
 
       senderAPN.pushNotification(note, myDevice);
