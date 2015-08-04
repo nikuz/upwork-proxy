@@ -298,6 +298,7 @@ var pDisableNotifications = function(options, callback) {
     fillMinutes({
       userid: userid,
       interval: userinfo.notifyInterval,
+      timezone: userinfo.timezone || '0',
       disable: true
     }, function(err) {
       if (err) {
