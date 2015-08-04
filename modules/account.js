@@ -191,7 +191,7 @@ var pUpdate = function(options, callback) {
       _.extend(fmOpts, {
         disable: true,
         interval: userinfo.notifyInterval,
-        timezone: userinfo.timezone
+        timezone: userinfo.timezone || opts.timezone
       });
       fill();
       userinfo.notifications = false;
