@@ -56,7 +56,7 @@ var process = function() {
       console.log('Cur UTC minute: ' + curUTCMinute);
 
       _.each(timeZones, function(zone) {
-        var zoneMinute = curUTCMinute + Number(zone) * -1;
+        var zoneMinute = curUTCMinute + Number(zone);
         if (zoneMinute < 0) {
           zoneMinute = minutesPerDay - Math.abs(zoneMinute);
         } else if (zoneMinute > minutesPerDay) {
