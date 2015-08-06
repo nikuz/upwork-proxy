@@ -113,7 +113,11 @@ var process = function() {
             if (err) {
               internalCallback(err);
             } else {
-              response = JSON.parse(response);
+              try {
+                response = JSON.parse(response);
+              } catch (e) {
+                return internalCallback('Upwork response is not JSON: ' + response);
+              }
               _.each(users, function(user) {
                 // if user doesn't use APP more than two days
                 if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
