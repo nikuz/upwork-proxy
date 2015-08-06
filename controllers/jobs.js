@@ -24,6 +24,7 @@ var pGet = function(req, res) {
 var pList = function(req, res) {
   jobs.list({
     q: req.query.q,
+    category2: req.query.category2,
     title: req.query.title,
     skills: req.query.skills,
     budget: req.query.budget,
