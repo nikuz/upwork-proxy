@@ -85,11 +85,31 @@ var pList = function(options, callback) {
   workflow.emit('validateParams');
 };
 
+var pCategoriesList = function(options, callback) {
+  var cb = callback || noop;
+  upwork.request({
+    url: config.API_jobs_categories_url,
+    dataType: 'json'
+  }, function(err, response) {
+    if (err) {
+      cb(err);
+      log.captureMessage('Upwork categories request error', {
+        extra: {
+          err: err
+        }
+      });
+    } else {
+      cb(null, response);
+    }
+  });
+};
+
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
   get: pGet,
-  list: pList
+  list: pList,
+  categoriesList: pCategoriesList
 };

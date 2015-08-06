@@ -44,11 +44,24 @@ var pList = function(req, res) {
   });
 };
 
+var pCategoriesList = function(req, res) {
+  jobs.categoriesList({}, function(err, response) {
+    var result = {};
+    if (err) {
+      result.error = err;
+    } else {
+      result = response;
+    }
+    res.send(result);
+  });
+};
+
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
   get: pGet,
-  list: pList
+  list: pList,
+  categoriesList: pCategoriesList
 };
