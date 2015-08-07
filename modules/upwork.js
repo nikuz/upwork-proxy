@@ -41,7 +41,7 @@ var pRequest = function(options, callback) {
     } else {
       urlDelimiter = '&';
     }
-    url += urlDelimiter + key + '=' + item;
+    url += urlDelimiter + key + '=' + encodeURIComponent(item);
   });
 
   https.get(url, function(res) {
