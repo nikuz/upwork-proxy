@@ -24,6 +24,13 @@ module.exports = function(grunt) {
         'js/**/*.js',
         'specs/**/*.js'
       ]
+    },
+    mochacov: {
+      options: {
+        timeout: 1000 * 10,
+        reporter: 'spec'
+      },
+      all: ['specs/index.js']
     }
   });
 
@@ -33,4 +40,5 @@ module.exports = function(grunt) {
     'jscs',
     'jshint'
   ]);
+  grunt.registerTask('specs', ['mochacov']);
 };
