@@ -16,23 +16,39 @@ var filterJobs = function(options) {
   var opts = options || {},
     jobs = opts.jobs,
     user = opts.user,
-    min_date = new Date(user.last_job_date),
-    durationReg = new RegExp(user.duration, 'i'),
-    jobTypeReg = new RegExp(user.jobType, 'i'),
-    workloadFullTimeReg = '30+ hrs/week';
+    durations = {
+      Month: 'Less than 1 month',
+      Week: 'Less than 1 week',
+      Quarter: '1 to 3 months',
+      Semester: '3 to 6 months',
+      Ongoing: 'More than 6 months'
+    },
+    workloads = {
+      'As needed': [
+        '30+ hrs/week',
+        'Less than 10 hrs/week'
+      ],
+      'Part time': [
+        '30+ hrs/week',
+        '10-30 hrs/week'
+      ],
+      'Full time': [
+        '30+ hrs/week'
+      ]
+    },
+    filteredJobs = [];
 
-  var filteredJobs = [];
   _.each(jobs, function(job) {
     var suited = true;
-    if (new Date(job.date_created) <= min_date) {
+    if (job.date_created <= user.last_job_date) {
       suited = false;
-    } else if ((job.budget < user.budgetFrom || job.budget > user.budgetTo) && !_.isNull(job.budget)) {
+    } else if (!_.isNull(job.budget) && (job.budget < Number(user.budgetFrom) || job.budget > Number(user.budgetTo))) {
       suited = false;
-    } else if (user.duration !== 'All' && !_.isNull(job.duration) && !durationReg.test(job.duration)) {
+    } else if (user.duration !== 'All' && !_.isNull(job.duration) && job.duration !== durations[user.duration]) {
       suited = false;
-    } else if (user.jobType !== 'All' && !_.isNull(job.jobType) && !jobTypeReg.test(job.job_type)) {
+    } else if (user.jobType !== 'All' && !_.isNull(job.job_type) && job.job_type !== user.jobType) {
       suited = false;
-    } else if (user.workload !== 'All' && !_.isNull(job.workload) && user.workload === 'Full time' && job.workload !== workloadFullTimeReg) {
+    } else if (user.workload !== 'All' && !_.isNull(job.workload) && !_.contains(workloads[user.workload], job.workload)) {
       suited = false;
     }
     if (suited) {

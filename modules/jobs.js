@@ -2,8 +2,8 @@
 
 var config = require('../config.json'),
   _ = require('underscore'),
-  upwork = require('../modules/upwork'),
-  log = require('./log')();
+  upwork = require('./upwork'),
+  constants = require('../components/constants');
 
 var noop = function() {};
 
@@ -18,7 +18,7 @@ var pGet = function(options, callback) {
 
   workflow.on('validateParams', function() {
     if (!opts.id) {
-      cb('`id` is required');
+      cb(constants.get('REQUIRED', 'id'));
     } else {
       workflow.emit('getJob');
     }
@@ -26,16 +26,10 @@ var pGet = function(options, callback) {
 
   workflow.on('getJob', function() {
     upwork.request({
-      url: config.API_job_url.replace('{id}', opts.id),
-      dataType: 'json'
+      url: config.API_job_url.replace('{id}', opts.id)
     }, function(err, response) {
       if (err) {
         cb(err);
-        log.captureMessage('Upwork request error', {
-          extra: {
-            err: err
-          }
-        });
       } else {
         cb(null, response);
       }
@@ -52,7 +46,7 @@ var pList = function(options, callback) {
 
   workflow.on('validateParams', function() {
     if (!opts.q && !opts.title && !opts.skills) {
-      cb('`q` or `title` or `skills` required');
+      cb(constants.get('ONE_REQUIRED', ['q', 'title', 'skills']));
     } else {
       workflow.emit('getJobs');
     }
@@ -66,16 +60,10 @@ var pList = function(options, callback) {
     });
     upwork.request({
       url: config.API_jobs_url,
-      dataType: 'json',
       data: opts
     }, function(err, response) {
       if (err) {
         cb(err);
-        log.captureMessage('Upwork request error', {
-          extra: {
-            err: err
-          }
-        });
       } else {
         cb(null, response);
       }
@@ -88,16 +76,10 @@ var pList = function(options, callback) {
 var pCategoriesList = function(options, callback) {
   var cb = callback || noop;
   upwork.request({
-    url: config.API_jobs_categories_url,
-    dataType: 'json'
+    url: config.API_jobs_categories_url
   }, function(err, response) {
     if (err) {
       cb(err);
-      log.captureMessage('Upwork categories request error', {
-        extra: {
-          err: err
-        }
-      });
     } else {
       cb(null, response);
     }

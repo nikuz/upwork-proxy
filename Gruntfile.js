@@ -11,7 +11,9 @@ module.exports = function(grunt) {
       },
       src: [
         '*.js',
-        'js/**/*.js',
+        'components/**/*.js',
+        'controllers/**/*.js',
+        'modules/**/*.js',
         'specs/**/*.js'
       ]
     },
@@ -21,7 +23,9 @@ module.exports = function(grunt) {
       },
       all: [
         '*.js',
-        'js/**/*.js',
+        'components/**/*.js',
+        'controllers/**/*.js',
+        'modules/**/*.js',
         'specs/**/*.js'
       ]
     },

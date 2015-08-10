@@ -4,7 +4,8 @@ var _ = require('underscore'),
   db = require('../components/db'),
   crypto = require('crypto'),
   log = require('./log')(),
-  timeZones = require('../data/timezones');
+  timeZones = require('../data/timezones'),
+  constants = require('../components/constants');
 
 var noop = function() {};
 
@@ -35,12 +36,13 @@ var fillMinutes = function(options, callback) {
     }
     db.multi(multiStack, cb);
   } else {
-    log.captureMessage('Nonexistent time zone', {
+    var errText = constants.get('WRONG_TIMEZONE');
+    log.captureMessage(errText, {
       extra: {
         timezone: timezone
       }
     });
-    cb('Nonexistent time zone');
+    cb(errText);
   }
 
   function generateStack(interval, rem) {
@@ -92,7 +94,7 @@ var pCreate = function(options, callback) {
     var errors = [];
     _.each(opts, function(field, key) {
       if (_.isUndefined(opts[key])) {
-        errors.push(key +' is required');
+        errors.push(constants.get('REQUIRED', key));
       }
     });
     if (errors.length) {
@@ -113,7 +115,7 @@ var pCreate = function(options, callback) {
     db.hget('users', userid, function(err, response) {
       if (err) {
         cb(err);
-      } else if(response) {
+      } else if (response) {
         cb(null, {
           userid: userid
         });
@@ -169,8 +171,8 @@ var pUpdate = function(options, callback) {
     db.hget('users', userid, function(err, response) {
       if (err) {
         cb(err);
-      } else if(!response) {
-        cb('User not found');
+      } else if (!response) {
+        cb(constants.get('USER_NOT_FOUND'));
       } else {
         userinfo = response;
         workflow.emit('fillMinutes');
@@ -275,7 +277,7 @@ var pDisableNotifications = function(options, callback) {
 
   workflow.on('validateParams', function() {
     if (!userid) {
-      cb('`userid` is required');
+      cb(constants.get('REQUIRED', 'userid'));
     } else {
       workflow.emit('checkUser');
     }
@@ -285,8 +287,8 @@ var pDisableNotifications = function(options, callback) {
     db.hget('users', userid, function(err, response) {
       if (err) {
         cb(err);
-      } else if(!response) {
-        cb('User not found');
+      } else if (!response) {
+        cb(constants.get('USER_NOT_FOUND'));
       } else {
         userinfo = response;
         workflow.emit('disableNotifications');

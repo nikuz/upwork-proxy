@@ -3,14 +3,19 @@
 var config = require('../config.json'),
   _ = require('underscore'),
   OAuth = require('../components/oauth'),
-  https = require('https');
+  https = require('https'),
+  constants = require('../components/constants'),
+  log = require('./log')(),
+  oauth;
 
-var oauth = OAuth.init({
-  consumer: {
-    public: config.API_key,
-    secret: config.API_secret
-  }
-});
+if (!oauth) {
+  oauth = OAuth.init({
+    consumer: {
+      public: config.API_key,
+      secret: config.API_secret
+    }
+  });
+}
 
 // ----------------
 // public methods
@@ -47,13 +52,18 @@ var pRequest = function(options, callback) {
   https.get(url, function(res) {
     res.setEncoding('utf8');
     var data = '';
-    res.on('data', function(chunk){
+    res.on('data', function(chunk) {
       data += chunk;
     });
-    res.on('end', function(){
+    res.on('end', function() {
       cb(null, data);
     });
   }).on('error', function(e) {
+    log.captureMessage(constants.get('UPWORK_REQUEST_ERROR'), {
+      extra: {
+        err: e.message
+      }
+    });
     cb(e.message);
   });
 };

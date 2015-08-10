@@ -3,6 +3,8 @@
 var _ = require('underscore'),
   async = require('async'),
   config = require('../config.json'),
+  log = require('../modules/log')(),
+  constants = require('../components/constants'),
   redis = require('redis'),
   dbPrefix = config.db_prefix,
   db;
@@ -62,8 +64,12 @@ var getMembers = function(topic, members, options, callback) {
   });
 };
 
-db.on("error", function (err) {
-  console.log("DB Error: " + err);
+db.on('error', function(err) {
+  log.captureMessage(constants.get('DATABASE_ERROR'), {
+    extra: {
+      err: err
+    }
+  });
 });
 
 // ----------------

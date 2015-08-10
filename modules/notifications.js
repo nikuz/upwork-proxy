@@ -12,17 +12,18 @@ var db = require('../components/db'),
     key: '/var/www/upwork-proxy/keys/deploy-key.pem',
     ca: '/var/www/upwork-proxy/keys/entrust_2048_ca.cer',
     production: true
-  });
+  }),
+  constants = require('../components/constants');
 
 senderAPN.on('error', function(err) {
-  log.captureMessage('APN error', {
+  log.captureMessage(constants.get('APN_ERROR'), {
     extra: {
       err: err
     }
   });
 });
 senderAPN.on('socketError', function(err) {
-  log.captureMessage('APN socket error', {
+  log.captureMessage(constants.get('APN_SOCKET_ERROR'), {
     extra: {
       err: err
     }
@@ -45,8 +46,10 @@ var saveNotification = function(options) {
     function(internalCallback) {
       // get user info
       db.hget('users', userid, function(err, response) {
-        if (err || !response) {
-          internalCallback('Failed to get user info');
+        if (err) {
+          internalCallback(constants.get('DATABASE_ERROR'));
+        } else if (!response) {
+          internalCallback(constants.get('USER_NOT_FOUND'));
         } else {
           userInfo = response;
           internalCallback();
@@ -56,8 +59,10 @@ var saveNotification = function(options) {
     function(internalCallback) {
       // get id for new notification
       db.counter('g_notifications', function(err, response) {
-        if (err || !response) {
-          internalCallback('Failed to get new notification ID');
+        if (err) {
+          internalCallback(constants.get('DATABASE_ERROR'));
+        } else if (!response) {
+          internalCallback(constants.get('FAILED_GET_NOTIFICATION_ID'));
         } else {
           notificationId = response.toString();
           internalCallback();
@@ -73,7 +78,7 @@ var saveNotification = function(options) {
         created: date.toISOString()
       };
       db.hset('notifications', notificationId, notificationInfo, function(err, response) {
-        internalCallback(err || !response ? 'Can\'t save notification'  : null);
+        internalCallback(err || !response ? constants.get('FAILED_SAVE_NOTIFICATION')  : null);
       });
     },
     function(internalCallback) {

@@ -1,6 +1,6 @@
 'use strict';
 
-var CryptoJS = require("crypto-js");
+var CryptoJS = require('crypto-js');
 
 /**
  * Constructor
