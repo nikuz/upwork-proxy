@@ -81,7 +81,7 @@ var pMulti = function(operations, callback) {
     multi = db.multi();
 
   if (!_.isArray(operations)) {
-    cb(constants.keys.ARRAY_REQUIRED, null);
+    cb(constants.get('ARRAY_REQUIRED', 'operations'));
     return;
   }
 

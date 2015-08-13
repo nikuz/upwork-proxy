@@ -131,7 +131,6 @@ var pSend = function(notifications, callback) {
       });
       internalCallback();
     } else if (item.os === 'ios' && item.push_id.length > 0) {
-      console.log(item.push_id);
       var myDevice = new apn.Device(item.push_id),
         note = new apn.Notification();
 

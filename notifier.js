@@ -7,55 +7,105 @@ var _ = require('underscore'),
   upwork = require('./modules/upwork'),
   account = require('./modules/account'),
   log = require('./modules/log')(),
-  notifications = require('./modules/notifications'),
+  notificationsModule = require('./modules/notifications'),
   timeZones = require('./data/timezones'),
   interval = 6e4 * 5, // 5 minutes
   sessionJob = 0;
 
-var filterJobs = function(options) {
+var noop = function() {};
+
+var filterJobs = function(options, callback) {
   var opts = options || {},
+    cb = callback || noop,
     jobs = opts.jobs,
     user = opts.user,
-    durations = {
-      Month: 'Less than 1 month',
-      Week: 'Less than 1 week',
-      Quarter: '1 to 3 months',
-      Semester: '3 to 6 months',
-      Ongoing: 'More than 6 months'
-    },
-    workloads = {
-      'As needed': [
-        '30+ hrs/week',
-        'Less than 10 hrs/week'
-      ],
-      'Part time': [
-        '30+ hrs/week',
-        '10-30 hrs/week'
-      ],
-      'Full time': [
-        '30+ hrs/week'
-      ]
-    },
     filteredJobs = [];
 
   _.each(jobs, function(job) {
-    var suited = true;
-    if (job.date_created <= user.last_job_date) {
-      suited = false;
-    } else if (!_.isNull(job.budget) && (job.budget < Number(user.budgetFrom) || job.budget > Number(user.budgetTo))) {
-      suited = false;
-    } else if (user.duration !== 'All' && !_.isNull(job.duration) && job.duration !== durations[user.duration]) {
-      suited = false;
-    } else if (user.jobType !== 'All' && !_.isNull(job.job_type) && job.job_type !== user.jobType) {
-      suited = false;
-    } else if (user.workload !== 'All' && !_.isNull(job.workload) && !_.contains(workloads[user.workload], job.workload)) {
-      suited = false;
-    }
-    if (suited) {
+    if (job.date_created > user.last_job_date) {
       filteredJobs.push(job);
     }
   });
-  return filteredJobs;
+  cb(null, filteredJobs);
+};
+
+//var filterJobs = function(options, callback) {
+//  var opts = options || {},
+//    cb = callback || noop,
+//    jobs = opts.jobs,
+//    user = opts.user,
+//    durations = {
+//      Month: 'Less than 1 month',
+//      Week: 'Less than 1 week',
+//      Quarter: '1 to 3 months',
+//      Semester: '3 to 6 months',
+//      Ongoing: 'More than 6 months'
+//    },
+//    workloads = {
+//      'As needed': [
+//        '30+ hrs/week',
+//        'Less than 10 hrs/week'
+//      ],
+//      'Part time': [
+//        '30+ hrs/week',
+//        '10-30 hrs/week'
+//      ],
+//      'Full time': [
+//        '30+ hrs/week'
+//      ]
+//    },
+//    filteredJobs = [];
+//
+//  _.each(jobs, function(job) {
+//    var suited = true;
+//    if (job.date_created <= user.last_job_date) {
+//      suited = false;
+//    } else if (!_.isNull(job.budget) && (job.budget < Number(user.budgetFrom) || job.budget > Number(user.budgetTo))) {
+//      suited = false;
+//    } else if (user.duration !== 'All' && !_.isNull(job.duration) && job.duration !== durations[user.duration]) {
+//      suited = false;
+//    } else if (user.jobType !== 'All' && !_.isNull(job.job_type) && job.job_type !== user.jobType) {
+//      suited = false;
+//    } else if (user.workload !== 'All' && !_.isNull(job.workload) && !_.contains(workloads[user.workload], job.workload)) {
+//      suited = false;
+//    }
+//    if (suited) {
+//      filteredJobs.push(job);
+//    }
+//  });
+//  cb(null, filteredJobs);
+//};
+
+// calculate current minutes in all time zones
+var calculateMinutes = function(options, callback) {
+  var opts = options || {},
+    cb = callback || noop,
+    today = opts.minute ? new Date(opts.minute) : new Date(),
+    curUTCMinute = today.getUTCHours() * 60 + today.getUTCMinutes(),
+    minutesPerDay = 1440, // minutes per day
+    minutes = [];
+
+  _.each(timeZones, function(zone) {
+    var zoneMinute = curUTCMinute - Number(zone);
+    if (zoneMinute < 0) {
+      zoneMinute = minutesPerDay - Math.abs(zoneMinute);
+    } else if (zoneMinute > minutesPerDay) {
+      zoneMinute = zoneMinute - minutesPerDay;
+    } else if (zoneMinute === minutesPerDay) {
+      zoneMinute = 0;
+    }
+    minutes.push('time:' + zone + ':' + zoneMinute);
+  });
+
+  cb(null, {
+    curMinute: curUTCMinute,
+    minutes: minutes
+  });
+};
+
+var reqFieldPrepare = function(field) {
+  field = field.toLowerCase().replace(' ', '_');
+  return field === 'all' ? '' : field;
 };
 
 var process = function() {
@@ -63,28 +113,12 @@ var process = function() {
   var startTime = new Date().getTime();
   async.waterfall([
     function(callback) {
-      // calculate current minutes in all time zones
-      var today = new Date(),
-        curUTCMinute = today.getUTCHours() * 60 + today.getUTCMinutes(),
-        minutesPerDay = 1440, // minutes per day
-        minutes = [];
-
-      console.log('Cur UTC minute: ' + curUTCMinute);
-
-      _.each(timeZones, function(zone) {
-        var zoneMinute = curUTCMinute + Number(zone);
-        if (zoneMinute < 0) {
-          zoneMinute = minutesPerDay - Math.abs(zoneMinute);
-        } else if (zoneMinute > minutesPerDay) {
-          zoneMinute = zoneMinute - minutesPerDay;
-        }
-        minutes.push('time:' + zone + ':' + zoneMinute);
-      });
-
-      callback(null, minutes);
+      var minutes = calculateMinutes();
+      console.log('Cur UTC minute: ' + minutes.curUTCMinute);
+      callback(null, minutes.minutes);
     },
     function(curMinutes, callback) {
-      // get users that should get notification on current minutes
+      // get users who should get notification on current minutes
       db.union(curMinutes, 'users', function(err, response) {
         if (err) {
           callback(err);
@@ -93,72 +127,76 @@ var process = function() {
         }
       });
     },
+    //function(users, callback) {
+    //  // group users by feeds
+    //  if (users.length) {
+    //    console.log('Users to delivery: %d', users.length);
+    //    var feeds = {};
+    //    _.each(users, function(user) {
+    //      if (!feeds[user.feeds]) {
+    //        feeds[user.feeds] = [];
+    //      }
+    //      feeds[user.feeds].push(user);
+    //    });
+    //    users = null;
+    //    callback(null, feeds);
+    //  } else {
+    //    console.log('No users');
+    //    callback(null, null);
+    //  }
+    //},
     function(users, callback) {
-      // group users by feeds
       if (users.length) {
-        console.log('Users to delivery: %d', users.length);
-        var feeds = {};
-        _.each(users, function(user) {
-          if (!feeds[user.feeds]) {
-            feeds[user.feeds] = [];
-          }
-          feeds[user.feeds].push(user);
-        });
-        users = null;
-        callback(null, feeds);
-      } else {
-        console.log('No users');
-        callback(null, null);
-      }
-    },
-    function(feeds, callback) {
-      if (feeds) {
         // get new jobs
         var notifications = [];
-        async.each(feeds, function(users, internalCallback) {
-          var feed = users[0].feeds;
-          upwork.request({
-            url: config.API_jobs_url,
-            dataType: 'json',
-            data: {
-              q: feed,
-              paging: '0;50',
-              sort: 'create_time desc'
-            }
-          }, function(err, response) {
-            if (err) {
-              internalCallback(err);
-            } else {
-              try {
-                response = JSON.parse(response);
-              } catch (e) {
-                return internalCallback('Upwork response is not JSON: ' + response);
+        async.each(users, function(user, internalCallback) {
+          // if user doesn't use APP more than two days
+          if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
+            // remove user from notifications queue
+            account.disableNotifications({
+              userid: user.id
+            });
+            internalCallback();
+          } else {
+            upwork.request({
+              url: config.API_jobs_url,
+              data: {
+                q: user.feed,
+                category2: user.category2,
+                budget: '[' + user.budgetFrom + ' TO ' + user.budgetTo + ']',
+                duration: reqFieldPrepare(user.duration),
+                job_type: reqFieldPrepare(user.jobType),
+                workload: reqFieldPrepare(user.workload),
+                paging: '0;50',
+                sort: 'create_time desc'
               }
-              _.each(users, function(user) {
-                // if user doesn't use APP more than two days
-                if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
-                  // remove user from notifications queue
-                  return account.disableNotifications({
-                    userid: user.id
-                  });
+            }, function(err, response) {
+              if (err) {
+                internalCallback(err);
+              } else {
+                try {
+                  response = JSON.parse(response);
+                } catch (e) {
+                  return internalCallback('Upwork response is not JSON: ' + response);
                 }
-                var jobs = filterJobs({
+                filterJobs({
                   jobs: response.jobs,
                   user: user
+                }, function(err, response) {
+                  if (response.length) {
+                    notifications.push({
+                      userid: user.id,
+                      push_id: user.push_id,
+                      os: user.os,
+                      amount: response.length,
+                      firstJob: response[0]
+                    });
+                  }
                 });
-                if (jobs.length) {
-                  notifications.push({
-                    userid: user.id,
-                    push_id: user.push_id,
-                    os: user.os,
-                    amount: jobs.length,
-                    firstJob: jobs[0]
-                  });
-                }
-              });
-              internalCallback();
-            }
-          });
+                internalCallback();
+              }
+            });
+          }
         }, function(err) {
           if (err) {
             callback(err);
@@ -170,11 +208,11 @@ var process = function() {
         callback(null, null);
       }
     },
-    function(messages, callback) {
-      if (messages && messages.length) {
+    function(notifications, callback) {
+      if (notifications && notifications.length) {
         // send notifications
-        console.log('Notifications to delivery: %d', messages.length);
-        notifications.send(messages, callback);
+        console.log('Notifications to delivery: %d', notifications.length);
+        notificationsModule.send(notifications, callback);
       } else {
         callback(null, null);
       }
@@ -208,8 +246,10 @@ var process = function() {
 // public functions
 // ----------------
 
-var pStart = function() {
-  var today = new Date(),
+var pStart = function(options, callback) {
+  var opts = options || {},
+    cb = callback || noop,
+    today = opts.minute ? new Date(opts.minute) : new Date(),
     i = today.getUTCHours() * 60 + today.getUTCMinutes(),
     l = 1440, // minutes per day
     s = today.getUTCSeconds(),
@@ -221,11 +261,22 @@ var pStart = function() {
     }
     timeToStartCron += 1;
   }
-  setTimeout(function() {
-    console.log('Start cron job in %s', new Date());
-    process();
-    setInterval(process, interval);
-  }, 6e4 * timeToStartCron - s * 1000);
+  timeToStartCron = 6e4 * (timeToStartCron || 5) - s * 1000;
+  if (opts.test) {
+    cb(null, {
+      startAfter: timeToStartCron
+    });
+  } else {
+    setTimeout(function() {
+      console.log('Start cron job in %s', new Date());
+      process();
+      setInterval(process, interval);
+    }, timeToStartCron);
+  }
+};
+
+var pCalculateMinutes = function(options, callback) {
+  calculateMinutes(options, callback);
 };
 
 // ---------
@@ -233,5 +284,6 @@ var pStart = function() {
 // ---------
 
 exports = module.exports = {
-  start: pStart
+  start: pStart,
+  calculateMinutes: pCalculateMinutes
 };
