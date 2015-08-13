@@ -7,10 +7,36 @@ var _ = require('underscore'),
   constants = require('../components/constants'),
   redis = require('redis'),
   dbPrefix = config.db_prefix,
-  db;
+  db,
+  dbConnected;
 
 if (!db) {
-  db = redis.createClient();
+  var address = '127.0.0.1',
+    port = 6379,
+    password = '';
+
+  switch (process.env.CURRENT_ENV) {
+    case 'PROD':
+      password = config.db_password;
+      break;
+    case 'DEV':
+      address = config.db_remote_host;
+      password = config.db_password;
+      break;
+  }
+  db = redis.createClient(port, address);
+  db.auth(password);
+
+  db.on('error', function(err) {
+    console.log('Redis ' + err);
+    if (!dbConnected) {
+      process.exit(1);
+    }
+  });
+  db.on('ready', function() {
+    dbConnected = true;
+    console.log('Redis connected: %s:%d', address, port);
+  });
 }
 
 var noop = function() {};

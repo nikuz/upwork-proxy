@@ -113,9 +113,14 @@ var process = function() {
   var startTime = new Date().getTime();
   async.waterfall([
     function(callback) {
-      var minutes = calculateMinutes();
-      console.log('Cur UTC minute: ' + minutes.curUTCMinute);
-      callback(null, minutes.minutes);
+      calculateMinutes(null, function(err, response) {
+        if (err) {
+          callback(err);
+        } else {
+          console.log('Cur UTC minute: ' + response.curMinute);
+          callback(null, response.minutes);
+        }
+      });
     },
     function(curMinutes, callback) {
       // get users who should get notification on current minutes
@@ -147,6 +152,7 @@ var process = function() {
     //},
     function(users, callback) {
       if (users.length) {
+        console.log('Users to delivery: %d', users.length);
         // get new jobs
         var notifications = [];
         async.each(users, function(user, internalCallback) {
@@ -205,6 +211,7 @@ var process = function() {
           }
         });
       } else {
+        console.log('No users');
         callback(null, null);
       }
     },
@@ -262,6 +269,7 @@ var pStart = function(options, callback) {
     timeToStartCron += 1;
   }
   timeToStartCron = 6e4 * (timeToStartCron || 5) - s * 1000;
+  console.log('Secconds to first notification: %d', timeToStartCron / 1000);
   if (opts.test) {
     cb(null, {
       startAfter: timeToStartCron

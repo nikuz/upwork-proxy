@@ -25,7 +25,6 @@
     "nodemailer": "^1.4.0",
     "raven": "^0.8.1",
     "redis": "^0.12.1",
-    "redis-dump": "^0.1.6",
     "underscore": "^1.8.3"
   }
 }
