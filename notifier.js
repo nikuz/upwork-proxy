@@ -18,11 +18,15 @@ var filterJobs = function(options, callback) {
   var opts = options || {},
     cb = callback || noop,
     jobs = opts.jobs,
-    user = opts.user,
+    limiter = opts.limiter,
     filteredJobs = [];
 
+  if (!_.isDate(limiter)) {
+    limiter = new Date(limiter);
+  }
+
   _.each(jobs, function(job) {
-    if (new Date(job.date_created) > new Date(user.last_job_date)) {
+    if (new Date(job.date_created) > limiter) {
       filteredJobs.push(job);
     }
   });
@@ -110,28 +114,33 @@ var reqFieldPrepare = function(field) {
 
 var process = function(options) {
   var opts = options || {},
-    startTime = Date.now();
+    startTime = Date.now(),
+    minutes,
+    users,
+    notifications = [];
 
   console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
-  async.waterfall([
+  async.series([
     function(callback) {
-      //new Date(Date.now() + opys.timeToStartCron).getUTCMinutes()
+      //new Date(Date.now() + opts.timeToStartCron).getUTCMinutes()
       calculateMinutes(null, function(err, response) {
         if (err) {
           callback(err);
         } else {
           console.log('Cur UTC minute: ' + response.curMinute);
-          callback(null, response.minutes);
+          minutes = response.minutes;
+          callback();
         }
       });
     },
-    function(curMinutes, callback) {
+    function(callback) {
       // get users who should get notification on current minutes
-      db.union(curMinutes, 'users', function(err, response) {
+      db.union(minutes, 'users', function(err, response) {
         if (err) {
           callback(err);
         } else {
-          callback(null, response.items);
+          users = response.items;
+          callback();
         }
       });
     },
@@ -153,11 +162,10 @@ var process = function(options) {
     //    callback(null, null);
     //  }
     //},
-    function(users, callback) {
+    function(callback) {
+      // parse users, get new jobs, calculate notifications count
+      console.log('Users to delivery: %d', users.length);
       if (users.length) {
-        console.log('Users to delivery: %d', users.length);
-        // get new jobs
-        var notifications = [];
         async.each(users, function(user, internalCallback) {
           // if user doesn't use APP more than two days
           if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
@@ -193,7 +201,7 @@ var process = function(options) {
                 }
                 filterJobs({
                   jobs: response.jobs,
-                  user: user
+                  limiter: user.last_job_date
                 }, function(err, response) {
                   if (response.length) {
                     notifications.push({
@@ -209,25 +217,18 @@ var process = function(options) {
               }
             });
           }
-        }, function(err) {
-          if (err) {
-            callback(err);
-          } else {
-            callback(null, notifications);
-          }
-        });
+        }, callback);
       } else {
-        console.log('No users');
-        callback(null, null);
+        callback();
       }
     },
-    function(notifications, callback) {
+    function(callback) {
       // send notifications
-      if (notifications && notifications.length) {
-        console.log('Notifications to delivery: %d', notifications.length);
+      console.log('Notifications to delivery: %d', notifications.length);
+      if (notifications.length) {
         notificationsModule.send(notifications, callback);
       } else {
-        callback(null, null);
+        callback();
       }
     }
   ], function(err) {
@@ -275,22 +276,29 @@ var pStart = function(options, callback) {
     timeToStartCron += 1;
   }
   timeToStartCron = 6e4 * (timeToStartCron || 5) - s * 1000;
-  console.log('Seconds to first notification: %d', timeToStartCron / 1000);
   if (opts.test) {
     cb(null, {
       startAfter: timeToStartCron
     });
   } else {
+    console.log('Seconds to first notification: %d', timeToStartCron / 1000);
     setTimeout(function() {
       console.log('Start cron job in %s', new Date());
       process();
       setInterval(process, interval);
     }, timeToStartCron);
   }
+  //process({
+  //  timeToStartCron: timeToStartCron
+  //});
 };
 
 var pCalculateMinutes = function(options, callback) {
   calculateMinutes(options, callback);
+};
+
+var pFilterJobs = function(options, callback) {
+  filterJobs(options, callback);
 };
 
 // ---------
@@ -299,5 +307,6 @@ var pCalculateMinutes = function(options, callback) {
 
 exports = module.exports = {
   start: pStart,
+  filterJobs: pFilterJobs,
   calculateMinutes: pCalculateMinutes
 };

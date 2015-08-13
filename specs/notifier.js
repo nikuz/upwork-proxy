@@ -3,9 +3,8 @@
 var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
-  data = require('./data/index'),
-  jobsToFilter = data.jobsToFilter,
-  notifier = require('../notifier');
+  notifier = require('../notifier'),
+  jobs = require('../modules/jobs');
 
 describe('Notifier', function() {
   describe('Start', function() {
@@ -85,14 +84,46 @@ describe('Notifier', function() {
     });
   });
 
-  //describe('Filter', function() {
-  //  it('should return only jobs with duration equal "Less than 1 month"', function(done) {
-  //    notifier.filter(jobsToFilter, function(err, response) {
-  //      console.log(response);
-  //      expect(!!err).to.eql(false);
-  //      expect(response).to.be.an('object');
-  //      done();
-  //    });
-  //  });
-  //});
+  describe('Filter', function() {
+    it('should return jobs not older than 1 hour', function(done) {
+      var hourAgo = new Date(Date.now() - 36e5),
+        receivedJobs;
+      async.series([
+        function(callback) {
+          jobs.list({
+            q: 'javascript',
+            paging: '0;50'
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            response = JSON.parse(response);
+            expect(response.jobs).to.be.an('array');
+            expect(response.jobs.length).to.eql(50);
+            receivedJobs = response.jobs;
+            callback();
+          });
+        },
+        function(callback) {
+          notifier.filterJobs({
+            jobs: receivedJobs,
+            limiter: hourAgo
+          }, function(err, response) {
+            var filteredJobs = [];
+            expect(!!err).to.eql(false);
+            expect(response).to.be.an('array');
+            _.each(response, function(item) {
+              var created = new Date(item.date_created);
+              expect(created).to.be.above(hourAgo);
+              if (created > hourAgo) {
+                filteredJobs.push(item);
+              }
+            });
+            expect(filteredJobs).to.have.length.below(50);
+            callback();
+          });
+        }
+      ], function() {
+        done();
+      });
+    });
+  });
 });
