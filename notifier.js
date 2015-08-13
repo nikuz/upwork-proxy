@@ -22,7 +22,7 @@ var filterJobs = function(options, callback) {
     filteredJobs = [];
 
   _.each(jobs, function(job) {
-    if (job.date_created > user.last_job_date) {
+    if (new Date(job.date_created) > new Date(user.last_job_date)) {
       filteredJobs.push(job);
     }
   });
@@ -108,11 +108,14 @@ var reqFieldPrepare = function(field) {
   return field === 'all' ? '' : field;
 };
 
-var process = function() {
+var process = function(options) {
+  var opts = options || {},
+    startTime = Date.now();
+
   console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
-  var startTime = new Date().getTime();
   async.waterfall([
     function(callback) {
+      //new Date(Date.now() + opys.timeToStartCron).getUTCMinutes()
       calculateMinutes(null, function(err, response) {
         if (err) {
           callback(err);
@@ -164,18 +167,21 @@ var process = function() {
             });
             internalCallback();
           } else {
+            var requestData = {
+              q: user.feeds,
+              budget: '[' + user.budgetFrom + ' TO ' + user.budgetTo + ']',
+              duration: reqFieldPrepare(user.duration),
+              job_type: reqFieldPrepare(user.jobType),
+              workload: reqFieldPrepare(user.workload),
+              paging: '0;50',
+              sort: 'create_time desc'
+            };
+            if (user.category2) {
+              requestData.category2 = user.category2;
+            }
             upwork.request({
               url: config.API_jobs_url,
-              data: {
-                q: user.feed,
-                category2: user.category2,
-                budget: '[' + user.budgetFrom + ' TO ' + user.budgetTo + ']',
-                duration: reqFieldPrepare(user.duration),
-                job_type: reqFieldPrepare(user.jobType),
-                workload: reqFieldPrepare(user.workload),
-                paging: '0;50',
-                sort: 'create_time desc'
-              }
+              data: requestData
             }, function(err, response) {
               if (err) {
                 internalCallback(err);
@@ -216,8 +222,8 @@ var process = function() {
       }
     },
     function(notifications, callback) {
+      // send notifications
       if (notifications && notifications.length) {
-        // send notifications
         console.log('Notifications to delivery: %d', notifications.length);
         notificationsModule.send(notifications, callback);
       } else {
@@ -269,7 +275,7 @@ var pStart = function(options, callback) {
     timeToStartCron += 1;
   }
   timeToStartCron = 6e4 * (timeToStartCron || 5) - s * 1000;
-  console.log('Secconds to first notification: %d', timeToStartCron / 1000);
+  console.log('Seconds to first notification: %d', timeToStartCron / 1000);
   if (opts.test) {
     cb(null, {
       startAfter: timeToStartCron
