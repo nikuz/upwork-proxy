@@ -3,7 +3,7 @@
 var _ = require('underscore'),
   async = require('async'),
   config = require('../config.json'),
-  log = require('../modules/log')(),
+  log = require('../modules/log'),
   constants = require('../components/constants'),
   redis = require('redis'),
   dbPrefix = config.db_prefix,
@@ -120,6 +120,9 @@ var pMulti = function(operations, callback) {
         multi[operation](topic, oItem.score, oItem.id);
         break;
       case 'zrem':
+        multi[operation](topic, oItem.id);
+        break;
+      case 'zscore':
         multi[operation](topic, oItem.id);
         break;
     }

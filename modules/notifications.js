@@ -5,7 +5,7 @@ var db = require('../components/db'),
   gcm = require('node-gcm'),
   apn = require('apn'),
   config = require('../config.json'),
-  log = require('./log')(),
+  log = require('./log'),
   senderGCM = new gcm.Sender(config.GCM_key),
   senderAPN = new apn.Connection({
     cert: '/var/www/upwork-proxy/keys/deploy-cert.pem',
@@ -106,9 +106,11 @@ var saveNotification = function(options) {
 // public functions
 // ----------------
 
-var pSend = function(notifications, callback) {
-  var cb = callback || noop;
-  notifications = notifications || [];
+var pSend = function(options, callback) {
+  var cb = callback || noop,
+    opts = options || {},
+    notifications = opts.notifications || [];
+
   async.each(notifications, function(item, internalCallback) {
     var messageText = item.firstJob.title.substring(0, 100);
     if (item.os === 'android' && item.push_id.length > 0) {

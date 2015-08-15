@@ -12,5 +12,6 @@ exports = module.exports = function(app) {
   app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
   // account
   app.post('/account', urlencodeParser, controllers.account.create);
-  app.post('/account/:userid', urlencodeParser, controllers.account.update);
+  app.post('/account/:userid', urlencodeParser, controllers.account.update); // TODO: actually should be PUT
+  app.get('/account/:userid', controllers.account.get);
 };

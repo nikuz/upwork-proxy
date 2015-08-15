@@ -63,11 +63,26 @@ var pUpdate = function(req, res) {
   });
 };
 
+var pGet = function(req, res) {
+  account.get({
+    id: req.path.userid
+  }, function(err, response) {
+    var result = {};
+    if (err) {
+      result.error = err;
+    } else {
+      result = response;
+    }
+    res.send(result);
+  });
+};
+
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
   create: pCreate,
-  update: pUpdate
+  update: pUpdate,
+  get: pGet
 };

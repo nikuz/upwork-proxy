@@ -3,28 +3,80 @@
 var _ = require('underscore'),
   db = require('../components/db'),
   crypto = require('crypto'),
-  log = require('./log')(),
+  log = require('./log'),
   timeZones = require('../data/timezones'),
   constants = require('../components/constants');
 
 var noop = function() {};
 
+var baseNotificationInterval = 5;
+
 var fillMinutes = function(options, callback) {
-  var opts = options || {},
+  var workflow = new(require('events').EventEmitter)(),
+    opts = options || {},
     cb = callback || noop,
     userid = opts.userid,
-    interval = Number(opts.interval),
+    interval = Number(opts.interval) || baseNotificationInterval,
     prevInterval = Number(opts.prevInterval),
     timezone = opts.timezone,
     prevTimezone = opts.prevTimezone,
+    dndFrom,
+    dndTo,
     disable = opts.disable,
     timeReg = /\d{2}:\d{2}/,
-    dndFrom = minutesDND(opts.dndFrom),
-    dndTo = minutesDND(opts.dndTo),
     multiStack = [],
     timestamp = new Date().getTime();
 
-  if (_.contains(timeZones, timezone)) {
+  workflow.on('validateParams', function() {
+    var errors = [];
+    if (!userid) {
+      errors.push(constants.get('REQUIRED', 'userid'));
+    }
+    if (!_.contains(timeZones, timezone)) {
+      errors.push(constants.get('WRONG_TIMEZONE'));
+    }
+    if (errors.length) {
+      cb(errors);
+    } else {
+      workflow.emit('fillMinutes');
+    }
+  });
+
+  workflow.on('fillMinutes', function() {
+    var minutesDND = function(dndTime) {
+      if (!timeReg.test(dndTime)) {
+        return null;
+      }
+      dndTime = dndTime.split(':');
+      return Number(dndTime[0]) * 60 + Number(dndTime[1]);
+    };
+    dndFrom = minutesDND(opts.dndFrom);
+    dndTo = minutesDND(opts.dndTo);
+
+    var generateStack = function(interval, rem) {
+      var i = 0,
+        l = 1440; // minutes per day
+
+      for (; i < l; i += interval) {
+        if (i === 0) {
+          continue;
+        }
+        // if generate stack to add minutes
+        // and we have "Do not disturb" interval
+        // if start hour less than stop hour, exclude time interval between start and stop
+        // otherwise exclude all minutes more than start and less than stop
+        if (!rem && !_.isNull(dndFrom) && !_.isNull(dndTo) && ((dndFrom < dndTo && i > dndFrom && i < dndTo) || (dndFrom > dndTo && (i > dndFrom || i < dndTo)))) {
+          continue;
+        }
+        multiStack.push({
+          operation: rem ? 'zrem' : 'zadd',
+          topic: 'time:' + (rem ? prevTimezone || timezone : timezone) + ':' + i,
+          id: userid,
+          score: timestamp
+        });
+      }
+    };
+
     if (disable) {
       generateStack(interval, true);
     } else {
@@ -34,48 +86,18 @@ var fillMinutes = function(options, callback) {
 
       generateStack(interval);
     }
-    db.multi(multiStack, cb);
-  } else {
-    var errText = constants.get('WRONG_TIMEZONE');
-    log.captureMessage(errText, {
-      extra: {
-        timezone: timezone
+    db.multi(multiStack, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          success: true
+        });
       }
     });
-    cb(errText);
-  }
+  });
 
-  function generateStack(interval, rem) {
-    var i = 0,
-      l = 1440; // minutes per day
-
-    for (; i < l; i += interval) {
-      if (i === 0) {
-        continue;
-      }
-      // if generate stack to add minutes
-      // and we have "Do not disturb" interval
-      // if start hour less than stop hour, exclude time interval between start and stop
-      // otherwise exclude all minutes more than start and less than stop
-      if (!rem && !_.isNull(dndFrom) && !_.isNull(dndTo) && ((dndFrom < dndTo && i > dndFrom && i < dndTo) || (dndFrom > dndTo && (i > dndFrom || i < dndTo)))) {
-        continue;
-      }
-      multiStack.push({
-        operation: rem ? 'zrem' : 'zadd',
-        topic: 'time:' + (rem ? prevTimezone || timezone : timezone) + ':' + i,
-        id: userid,
-        score: timestamp
-      });
-    }
-  }
-
-  function minutesDND(dndTime) {
-    if (!timeReg.test(dndTime)) {
-      return null;
-    }
-    dndTime = dndTime.split(':');
-    return Number(dndTime[0]) * 60 + Number(dndTime[1]);
-  }
+  workflow.emit('validateParams');
 };
 
 // ----------------
@@ -85,16 +107,31 @@ var fillMinutes = function(options, callback) {
 var pCreate = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
-    opts = options || {},
+    opts = options ? _.clone(options) : {},
     token = opts.id,
-    os = opts.os,
-    userid;
+    userid,
+    requiredFields = [
+      'id',
+      'os',
+      'budgetFrom',
+      'budgetTo',
+      'daysPosted',
+      'duration',
+      'jobType',
+      'workload',
+      'notifyInterval',
+      'notifyAllow',
+      'dndFrom',
+      'dndTo',
+      'useProxy',
+      'timezone'
+    ];
 
   workflow.on('validateParams', function() {
     var errors = [];
-    _.each(opts, function(field, key) {
-      if (_.isUndefined(opts[key])) {
-        errors.push(constants.get('REQUIRED', key));
+    _.each(requiredFields, function(item) {
+      if (_.isUndefined(opts[item])) {
+        errors.push(constants.get('REQUIRED', item));
       }
     });
     if (errors.length) {
@@ -131,9 +168,8 @@ var pCreate = function(options, callback) {
     });
     var userInfo = _.extend(opts, {
       id: userid,
-      notifications: false,
       push_id: token,
-      os: os,
+      notifications: false, // it's not notifyAllow
       created: new Date().toISOString()
     });
     db.hset('users', userid, userInfo, function(err) {
@@ -153,18 +189,38 @@ var pCreate = function(options, callback) {
 var pUpdate = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
-    opts = options || {},
+    opts = options ? _.clone(options) : {},
     userid = opts.id,
-    userinfo;
+    userinfo,
+    requiredFields = [
+      'id',
+      'os',
+      'budgetFrom',
+      'budgetTo',
+      'daysPosted',
+      'duration',
+      'jobType',
+      'workload',
+      'notifyInterval',
+      'notifyAllow',
+      'dndFrom',
+      'dndTo',
+      'useProxy',
+      'timezone'
+    ];
 
   workflow.on('validateParams', function() {
-    var keys = _.keys(opts);
-    _.each(keys, function(key) {
-      if (_.isUndefined(opts[key])) {
-        delete opts[key];
+    var errors = [];
+    _.each(requiredFields, function(item) {
+      if (_.isUndefined(opts[item])) {
+        errors.push(constants.get('REQUIRED', item));
       }
     });
-    workflow.emit('checkUser');
+    if (errors.length) {
+      cb(errors);
+    } else {
+      workflow.emit('checkUser');
+    }
   });
 
   workflow.on('checkUser', function() {
@@ -268,6 +324,73 @@ var pUpdate = function(options, callback) {
   workflow.emit('validateParams');
 };
 
+var pFillMinutes = function(options, callback) { // made public for tests
+  fillMinutes(options, callback);
+};
+
+var pGet = function(options, callback) {
+  var workflow = new(require('events').EventEmitter)(),
+    cb = callback || noop,
+    opts = options || {},
+    userid = opts.id,
+    userinfo;
+
+  workflow.on('validateParams', function() {
+    if (!userid) {
+      cb(constants.get('REQUIRED', 'id'));
+    } else {
+      workflow.emit('getUser');
+    }
+  });
+
+  workflow.on('getUser', function() {
+    db.hget('users', userid, function(err, response) {
+      if (err) {
+        cb(err);
+      } else if (!response) {
+        cb(constants.get('USER_NOT_FOUND'));
+      } else {
+        userinfo = response;
+        workflow.emit('getMinutes');
+      }
+    });
+  });
+
+  workflow.on('getMinutes', function() {
+    var multiStack = [],
+      i = 0,
+      l = 1440; // minutes per day
+
+    for (; i < l; i += baseNotificationInterval) {
+      if (i === 0) {
+        continue;
+      }
+      multiStack.push({
+        minute: userinfo.timezone + ':' + i,
+        operation: 'zscore',
+        topic: 'time:' + userinfo.timezone + ':' + i,
+        id: userid
+      });
+    }
+    db.multi(multiStack, function(err, response) {
+      if (err) {
+        cb(err);
+      } else {
+        var result = [];
+        _.each(response, function(value, key) {
+          if (value) {
+            result.push(multiStack[key].minute);
+          }
+        });
+        userinfo.notificationsMinutes = result;
+        cb(null, userinfo);
+      }
+    });
+  });
+
+  workflow.emit('validateParams');
+};
+
 var pDisableNotifications = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     cb = callback || noop,
@@ -334,5 +457,7 @@ var pDisableNotifications = function(options, callback) {
 exports = module.exports = {
   create: pCreate,
   update: pUpdate,
+  fillMinutes: pFillMinutes,
+  get: pGet,
   disableNotifications: pDisableNotifications
 };

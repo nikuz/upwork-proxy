@@ -5,7 +5,7 @@ var config = require('../config.json'),
   OAuth = require('../components/oauth'),
   https = require('https'),
   constants = require('../components/constants'),
-  log = require('./log')(),
+  log = require('./log'),
   oauth;
 
 if (!oauth) {

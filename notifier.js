@@ -6,7 +6,7 @@ var _ = require('underscore'),
   config = require('./config.json'),
   upwork = require('./modules/upwork'),
   account = require('./modules/account'),
-  log = require('./modules/log')(),
+  log = require('./modules/log'),
   notificationsModule = require('./modules/notifications'),
   timeZones = require('./data/timezones'),
   interval = 6e4 * 5, // 5 minutes
@@ -226,7 +226,9 @@ var process = function(options) {
       // send notifications
       console.log('Notifications to delivery: %d', notifications.length);
       if (notifications.length) {
-        notificationsModule.send(notifications, callback);
+        notificationsModule.send({
+          notifications: notifications
+        }, callback);
       } else {
         callback();
       }

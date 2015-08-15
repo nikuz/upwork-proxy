@@ -13,7 +13,10 @@ var dictionary = {
   FAILED_GET_NOTIFICATION_ID: 'Failed to get new notification ID',
   FAILED_SAVE_NOTIFICATION: 'Can\'t save notification',
   FAILED_TO_GET_FILEINFO: 'Failed to get file info',
-  REDIS_DUMP_EMPTY: 'Redis dump is empty'
+  REDIS_DUMP_EMPTY: 'Redis dump is empty',
+  PARAMETERS_WRONG_FORMAT: 'Format required: `%s`',
+  MODULE_NOT_EXIST: 'Module `%s` does not exist',
+  METHOD_NOT_EXIST: '`%s` method does not exist'
 };
 
 // ----------------

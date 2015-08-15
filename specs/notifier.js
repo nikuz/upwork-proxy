@@ -117,6 +117,7 @@ describe('Notifier', function() {
                 filteredJobs.push(item);
               }
             });
+            expect(filteredJobs).to.have.length.above(0);
             expect(filteredJobs).to.have.length.below(50);
             callback();
           });

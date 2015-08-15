@@ -1,0 +1,8 @@
+{
+  "operation": "account.fillMinutes",
+  "params": {
+    "userid": "3e89d34c93742d0a92d4dce69a857e2f",
+    "interval": "5",
+    "timezone": "-480"
+  }
+}

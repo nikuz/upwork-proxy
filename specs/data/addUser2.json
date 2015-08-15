@@ -1,0 +1,19 @@
+{
+  "operation": "account.create",
+  "params": {
+    "id": "222222222222222222222222222222222",
+    "os": "ios",
+    "budgetFrom": "100",
+    "budgetTo": "200",
+    "daysPosted": "50",
+    "duration": "As needed",
+    "jobType": "Fixed",
+    "workload": "All",
+    "notifyInterval": "20",
+    "notifyAllow": "true",
+    "dndFrom": "23:00",
+    "dndTo": "07:00",
+    "useProxy": "true",
+    "timezone": "-180"
+  }
+}
