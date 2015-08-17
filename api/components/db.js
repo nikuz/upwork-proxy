@@ -152,6 +152,15 @@ var pHset = function(topic, id, data, callback) {
   }
 };
 
+var pHgetall = function(topic, callback) {
+  var cb = callback || noop;
+  if (topic) {
+    db.hgetall(dbPrefix + topic, cb);
+  } else {
+    cb(true, null);
+  }
+};
+
 var pZrem = function(topic, id, callback) {
   var cb = callback || noop;
   db.zrem(dbPrefix + 'z:' + topic, id, function(err) {
@@ -223,6 +232,7 @@ exports = module.exports = {
   multi: pMulti,
   hget: pHget,
   hset: pHset,
+  hgetall: pHgetall,
   zadd: pZadd,
   zrem: pZrem,
   zall: pZall,

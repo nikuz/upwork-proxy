@@ -24,6 +24,7 @@
     "mocha": "^2.2.5",
     "node-gcm": "^0.10.0",
     "nodemailer": "^1.4.0",
+    "progress": "^1.1.8",
     "raven": "^0.8.1",
     "redis": "^0.12.1",
     "request": "^2.58.0",

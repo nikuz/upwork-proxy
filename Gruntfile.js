@@ -12,7 +12,8 @@ module.exports = function(grunt) {
       src: [
         '*.js',
         'api/**/*.js',
-        'specs/**/*.js'
+        'specs/**/*.js',
+        'utils/**/*.js'
       ]
     },
     jshint: {
@@ -22,7 +23,8 @@ module.exports = function(grunt) {
       all: [
         '*.js',
         'api/**/*.js',
-        'specs/**/*.js'
+        'specs/**/*.js',
+        'utils/**/*.js'
       ]
     },
     mochacov: {
@@ -46,5 +48,12 @@ module.exports = function(grunt) {
       process.env.SPECS_TARGET = target;
     }
     grunt.task.run(['mochacov']);
+  });
+  grunt.registerTask('utils', function() {
+    var done = this.async(),
+      target = grunt.option('target'),
+      env = grunt.option('env');
+
+    require('./utils/index')(grunt, done, env, target);
   });
 };
