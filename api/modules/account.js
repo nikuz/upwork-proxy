@@ -11,6 +11,35 @@ var noop = function() {};
 
 var baseNotificationInterval = 5;
 
+// need to old android builds
+var userFieldsMap = {
+  budgetFrom: 'number',
+  budgetTo: 'number',
+  daysPosted: 'number',
+  notifyInterval: 'number',
+  notifyAllow: 'boolean',
+  useProxy: 'boolean',
+  timezone: 'number'
+};
+
+var convertUserFields = function(data) {
+  _.each(userFieldsMap, function(value, key) {
+    switch (value) {
+      case 'number':
+        if (!_.isUndefined(data[key]) && !_.isNumber(data[key])) {
+          data[key] = Number(data[key]);
+        }
+        break;
+      case 'boolean':
+        if (!_.isUndefined(data[key]) && !_.isBoolean(data[key])) {
+          data[key] = data[key] === 'true';
+        }
+        break;
+    }
+  });
+};
+// end: need to old android builds
+
 var fillMinutes = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
     opts = options || {},
@@ -137,11 +166,11 @@ var pCreate = function(options, callback) {
     if (errors.length) {
       cb(errors);
     } else {
-      workflow.emit('generateUser');
+      workflow.emit('generateUserId');
     }
   });
 
-  workflow.on('generateUser', function() {
+  workflow.on('generateUserId', function() {
     var md5sum = crypto.createHash('md5');
     md5sum.update(token);
     userid = md5sum.digest('hex');
@@ -163,6 +192,7 @@ var pCreate = function(options, callback) {
   });
 
   workflow.on('saveUser', function() {
+    convertUserFields(opts);
     _.each(opts, function(value, key) {
       if (!_.isNumber(value) && !_.isBoolean(value)) {
         opts[key] = _.escape(value);
@@ -221,6 +251,7 @@ var pUpdate = function(options, callback) {
     if (errors.length) {
       cb(errors);
     } else {
+      convertUserFields(opts);
       workflow.emit('checkUser');
     }
   });
