@@ -1,6 +1,7 @@
 'use strict';
 
 var express = require('express'),
+  swagger = require('swagger-express-mw'),
   app = express(),
   PORT = Number(process.env.PORT || 8020),
   SERVER = String(process.env.SERVER_NAME || 'localhost'),
@@ -31,10 +32,21 @@ if (DEV) {
   process.env.CURRENT_ENV = 'TEST';
 }
 
-require('./routes')(app);
+require('./api/routes')(app);
 
-app.listen(app.PORT, function() {
-  console.log('%s:%d - %s', app.SERVER, app.PORT, new Date(Date.now()));
+var config = {
+  appRoot: __dirname // required config
+};
+
+swagger.create(config, function(err, swaggerExpress) {
+  if (err) { throw err; }
+
+  // install middleware
+  swaggerExpress.register(app);
+
+  app.listen(app.PORT, function() {
+    console.log('%s:%d - %s', app.SERVER, app.PORT, new Date(Date.now()));
+  });
 });
 
 require('./notifier').start();

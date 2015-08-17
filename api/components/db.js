@@ -2,9 +2,9 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  config = require('../config.json'),
+  config = require('../../config.json'),
   log = require('../modules/log'),
-  constants = require('../components/constants'),
+  constants = require('./constants'),
   redis = require('redis'),
   dbPrefix = config.db_prefix,
   db,

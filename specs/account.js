@@ -8,8 +8,8 @@ var _ = require('underscore'),
   addUser1 = data.addUser1,
   addUser2 = data.addUser2,
   fillMinutesUser1 = data.fillMinutesUser1,
-  events = require('../modules/events'),
-  account = require('../modules/account');
+  events = require('../api/modules/events'),
+  account = require('../api/modules/account');
 
 describe('Account', function() {
   describe('Create', function() {
@@ -137,7 +137,8 @@ describe('Account', function() {
         expect(minutes).to.have.length.above(0);
         _.each(minutes, function(item) {
           item = item.split(':');
-          expect(item[0]).to.eql(addUser1.params.timezone);
+          item[1] = Number(item[1]);
+          expect(item[0]).to.eql(String(addUser1.params.timezone));
           expect(item[1] % interval).to.eql(0);
           expect(item[1]).to.be.above(0);
           expect(item[1]).to.be.below(1440);
@@ -315,7 +316,7 @@ describe('Account', function() {
       _.extend(updateParams, {
         id: user1id,
         feeds: 'java',
-        timezone: '240'
+        timezone: 240
       });
       async.series([
         function(callback) {
@@ -338,7 +339,8 @@ describe('Account', function() {
             expect(minutes).to.have.length.above(0);
             _.each(minutes, function(item) {
               item = item.split(':');
-              expect(item[0]).to.eql(updateParams.timezone);
+              item[1] = Number(item[1]);
+              expect(item[0]).to.eql(String(updateParams.timezone));
               expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
               expect(item[1]).to.be.least(360);
               expect(item[1]).to.be.below(1440);
@@ -371,7 +373,7 @@ describe('Account', function() {
           var updateParams = _.clone(addUser1.params);
           _.extend(updateParams, {
             id: user1id,
-            notifyAllow: 'false'
+            notifyAllow: false
           });
           account.update(updateParams, function(err, response) {
             expect(!!err).to.eql(false);

@@ -1,0 +1,400 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: upwork-proxy API description
+# during dev, should point to your local machine
+#host: localhost:10010
+# basePath prefixes all resource paths
+basePath: /
+#
+schemes:
+  # tip: remove http to make production-grade
+  - http
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+
+paths:
+  /jobs:
+    get:
+      summary: Get list of jobs
+      description: Returns list of jobs or error if failed
+      operationId: jobs-list
+      parameters:
+        - name: q
+          in: query
+          description: Search query by all
+          required: false
+          type: string
+        - name: title
+          in: query
+          description: Search query by title
+          required: false
+          type: string
+        - name: skills
+          in: query
+          description: Search query by skills
+          required: false
+          type: string
+        - name: category2
+          in: query
+          description: Jobs category
+          required: false
+          type: string
+        - name: budget
+          in: query
+          description: Budget interval - [100 TO 200]
+          required: false
+          type: string
+        - name: days_posted
+          in: query
+          description: Jobs age in days
+          required: false
+          type: string
+        - name: duration
+          in: query
+          description: month, week, quarter, semester, ongoing
+          required: false
+          type: string
+        - name: job_type
+          in: query
+          description: fixed, hourly
+          required: false
+          type: string
+        - name: workload
+          in: query
+          description: as_needed, part_time, full_time
+          required: false
+          type: string
+        - name: paging
+          in: query
+          description: 10;20 First is offset, second is amount. Default is 0;10
+          required: false
+          type: string
+        - name: sort
+          in: query
+          default: create_time desc
+          description: create_time desc, Client_rating desc, Client_total_charge desc, Client_total_hours desc, score desc, workload desc, duration desc, create_time asc, Client_rating asc, Client_total_charge asc, Client_total_hours asc, score asc, workload asc, duration asc
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/JobsList"
+#            type: object
+#            properties:
+#              error:
+#                type: string
+#              result:
+#                $ref: "#/definitions/JobsList"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /api/profiles/v1/jobs/{id}.json:
+    get:
+      summary: Get specific job
+      description: Returns cpecific job by id or error if failed
+      operationId: job-item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of exiting job
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/JobItem"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /api/profiles/v2/metadata/categories.json:
+    get:
+      summary: Get jobs categories
+      description: Returns jobs categories or error if failed
+      operationId: jobs-categories
+      responses:
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/JobsCategoriesRequest"
+  /account:
+    post:
+      summary: Create an account
+      description: Create an account. Returns id of created user or error if failed. Also will return id of existing user if user with send Notification ID is exist.
+      operationId: account-create
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/AccountCreateBody"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/AccountCreateRequest"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /account/{userid}:
+    post:
+      summary: Update an account
+      description: Update an account of specific user. Returns success or error if failed.
+      operationId: account-update
+      parameters:
+        - name: userid
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/AccountUpdateBody"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /accounts/{userid}:
+    get:
+      summary: Get an account
+      description: Returns specific user info or error if failed.
+      operationId: account-get
+      parameters:
+        - name: userid
+          in: path
+          type: string
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/AccountItemResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+
+definitions:
+  RequestAuthUser:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      timezone:
+        type: string
+      timezone_offset:
+        type: string
+  JobsList:
+    properties:
+      server_time:
+        type: number
+      auth_user:
+        $ref: "#/definitions/RequestAuthUser"
+      jobs:
+        type: array
+        items:
+          $ref: "#/definitions/JobListItem"
+      paging:
+        $ref: "#/definitions/JobsPaging"
+  JobListItem:
+    properties:
+      id:
+        type: string
+      title:
+        type: string
+      snippet:
+        type: string
+      category2:
+        type: string
+      subcategory2:
+        type: string
+      skills:
+        type: array
+        items:
+          type: string
+      job_type:
+        type: string
+      budget:
+        type: number
+      duration:
+        type: string
+      workload:
+        type: string
+      job_status:
+        type: string
+      date_created:
+        type: string
+      url:
+        type: string
+      client:
+          $ref: "#/definitions/JobClient"
+  JobClient:
+    properties:
+      country:
+        type: string
+      feedback:
+        type: number
+      reviews_count:
+        type: number
+      jobs_posted:
+        type: number
+      past_hires:
+        type: number
+      payment_verification_status:
+        type: string
+  JobsPaging:
+    properties:
+      offset:
+        type: number
+      count:
+        type: number
+      total:
+        type: number
+  JobItem:
+    properties:
+      server_time:
+        type: number
+      auth_user:
+        $ref: "#/definitions/RequestAuthUser"
+      prifile:
+        type: string
+        description: Many job data
+  JobsCategoriesRequest:
+    properties:
+      server_time:
+        type: number
+      auth_user:
+        $ref: "#/definitions/RequestAuthUser"
+      categories:
+        type: array
+        items:
+          $ref: "#/definitions/JobsCategories"
+  JobsCategories:
+    properties:
+      title:
+        type: string
+      id:
+        type: string
+      topics:
+        type: array
+        items:
+          type: string
+          description: Subcategories
+  AccountCreateRequest:
+    properties:
+      userid:
+        type: string
+  AccountCreateBody:
+    required:
+    - id
+    - os
+    - budgetFrom
+    - budgetTo
+    - daysPosted
+    - duration
+    - jobType
+    - workload
+    - notifyInterval
+    - notifyAllow
+    - dndFrom
+    - dndTo
+    - useProxy
+    - timezone
+    properties:
+      id:
+        description: Notification ID. It's unique value used for registration user in API
+        type: string
+      os:
+        description: Operation system type (e.g. Android or iOS)
+        type: string
+      budgetFrom:
+        description: 100, 200 etc.
+        type: number
+      budgetTo:
+        description: 500, 1000 etc.
+        type: number
+      daysPosted:
+        default: 50
+        description: Jobs age in days
+        type: number
+      duration:
+        description: Month, Week, Quarter, Semester, Ongoing
+        type: string
+      jobType:
+        description: Fixed, Hourly
+        type: string
+      workload:
+        description: As needed, Part time, Full time
+        type: string
+      notifyInterval:
+        description: 5, 10, 20 etc. mins
+        type: number
+      notifyAllow:
+        description: true, false
+        type: boolean
+      dndFrom:
+        description: 00:00 - 23:59
+        type: string
+      dndTo:
+        description: 00:00 - 23:59
+        type: string
+      useProxy:
+        description: true, false
+        type: boolean
+      timezone:
+        description: User's time zone - 180, 720 etc.
+        type: number
+  AccountUpdateBody:
+    allOf:
+    - $ref: '#/definitions/AccountCreateBody'
+    - type: object
+      properties:
+        feeds:
+          description: Search feeds
+          type: string
+        last_job_date:
+          description: Date of last job that user got
+          type: string
+  AccountItemResponse:
+    allOf:
+    - $ref: '#/definitions/AccountCreateBody'
+    - type: object
+      properties:
+        feeds:
+          type: string
+        last_job_date:
+          type: string
+        prevFeeds:
+          type: array
+          items:
+            type: string
+        updated:
+          type: string
+        notificationsMinutes:
+          type: array
+          items:
+            type: string
+  ErrorResponse:
+    properties:
+      error:
+        type: string
+  SuccessResponse:
+    properties:
+      success:
+        type: boolean

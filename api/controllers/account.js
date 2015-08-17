@@ -38,6 +38,7 @@ var pUpdate = function(req, res) {
   var body = req.body || {};
   account.update({
     id: req.params.userid,
+    os: body.os,
     feeds: body.feeds,
     budgetFrom: body.budgetFrom,
     budgetTo: body.budgetTo,
@@ -65,7 +66,7 @@ var pUpdate = function(req, res) {
 
 var pGet = function(req, res) {
   account.get({
-    id: req.path.userid
+    id: req.params.userid
   }, function(err, response) {
     var result = {};
     if (err) {

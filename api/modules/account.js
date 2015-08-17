@@ -4,7 +4,7 @@ var _ = require('underscore'),
   db = require('../components/db'),
   crypto = require('crypto'),
   log = require('./log'),
-  timeZones = require('../data/timezones'),
+  timeZones = require('../../data/timezones'),
   constants = require('../components/constants');
 
 var noop = function() {};
@@ -18,7 +18,7 @@ var fillMinutes = function(options, callback) {
     userid = opts.userid,
     interval = Number(opts.interval) || baseNotificationInterval,
     prevInterval = Number(opts.prevInterval),
-    timezone = opts.timezone,
+    timezone = String(opts.timezone),
     prevTimezone = opts.prevTimezone,
     dndFrom,
     dndTo,
@@ -164,7 +164,9 @@ var pCreate = function(options, callback) {
 
   workflow.on('saveUser', function() {
     _.each(opts, function(value, key) {
-      opts[key] = _.escape(value);
+      if (!_.isNumber(value) && !_.isBoolean(value)) {
+        opts[key] = _.escape(value);
+      }
     });
     var userInfo = _.extend(opts, {
       id: userid,
@@ -244,7 +246,7 @@ var pUpdate = function(options, callback) {
         userid: userid
       };
 
-    if (opts.notifyAllow === 'false' && userinfo.notifyAllow === 'true' && userinfo.feeds) {
+    if (opts.notifyAllow === false && userinfo.notifyAllow === true && userinfo.feeds) {
       // if user disable notifications when it was enabled
       _.extend(fmOpts, {
         disable: true,
@@ -253,7 +255,7 @@ var pUpdate = function(options, callback) {
       });
       fill();
       userinfo.notifications = false;
-    } else if (feeds && opts.notifyAllow === 'true' && (userinfo.notifyAllow === 'false' || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo || opts.timezone !== userinfo.timezone)) {
+    } else if (feeds && opts.notifyAllow === true && (userinfo.notifyAllow === false || userinfo.notifyInterval !== opts.notifyInterval || (!userinfo.feeds && opts.feeds) || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo || opts.timezone !== userinfo.timezone)) {
       // if user initial add feeds
       // or changed notification interval
       // or enabled notifications when it was disabled
@@ -269,7 +271,7 @@ var pUpdate = function(options, callback) {
       });
       fill();
       userinfo.notifications = true;
-    } else if (feeds && userinfo.notifications === false && opts.notifyAllow === 'true') {
+    } else if (feeds && userinfo.notifications === false && opts.notifyAllow === true) {
       // if user long time don't use the APP, and then again opens it
       _.extend(fmOpts, {
         interval: opts.notifyInterval,
@@ -283,19 +285,17 @@ var pUpdate = function(options, callback) {
     }
 
     function fill() {
-      fillMinutes(fmOpts, function(err) {
-        if (err) {
-          cb(err);
-        } else {
-          workflow.emit('updateUserInfo');
-        }
+      fillMinutes(fmOpts, function() {
+        workflow.emit('updateUserInfo');
       });
     }
   });
 
   workflow.on('updateUserInfo', function() {
     _.each(opts, function(value, key) {
-      opts[key] = _.escape(value);
+      if (!_.isNumber(value) && !_.isBoolean(value)) {
+        opts[key] = _.escape(value);
+      }
     });
     // collect all users feeds for statistics
     if (opts.feeds !== userinfo.feeds && userinfo.feeds !== null) {

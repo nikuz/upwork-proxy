@@ -3,17 +3,17 @@
   "params": {
     "id": "1111111111111111111111111111111111111",
     "os": "android",
-    "budgetFrom": "0",
-    "budgetTo": "1000000",
-    "daysPosted": "50",
+    "budgetFrom": 0,
+    "budgetTo": 1000000,
+    "daysPosted": 50,
     "duration": "All",
     "jobType": "All",
     "workload": "All",
-    "notifyInterval": "5",
-    "notifyAllow": "true",
+    "notifyInterval": 5,
+    "notifyAllow": true,
     "dndFrom": "00:00",
     "dndTo": "06:00",
-    "useProxy": "true",
-    "timezone": "-480"
+    "useProxy": true,
+    "timezone": -480
   }
 }

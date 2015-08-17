@@ -11,9 +11,7 @@ module.exports = function(grunt) {
       },
       src: [
         '*.js',
-        'components/**/*.js',
-        'controllers/**/*.js',
-        'modules/**/*.js',
+        'api/**/*.js',
         'specs/**/*.js'
       ]
     },
@@ -23,9 +21,7 @@ module.exports = function(grunt) {
       },
       all: [
         '*.js',
-        'components/**/*.js',
-        'controllers/**/*.js',
-        'modules/**/*.js',
+        'api/**/*.js',
         'specs/**/*.js'
       ]
     },
@@ -44,5 +40,11 @@ module.exports = function(grunt) {
     'jscs',
     'jshint'
   ]);
-  grunt.registerTask('specs', ['mochacov']);
+  grunt.registerTask('specs', function() {
+    var target = grunt.option('target');
+    if (target) {
+      process.env.SPECS_TARGET = target;
+    }
+    grunt.task.run(['mochacov']);
+  });
 };

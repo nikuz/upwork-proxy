@@ -1,6 +1,6 @@
 'use strict';
 
-var config = require('../config.json'),
+var config = require('../../config.json'),
   _ = require('underscore'),
   upwork = require('./upwork'),
   constants = require('../components/constants');

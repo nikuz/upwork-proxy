@@ -4,7 +4,7 @@ var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
   notifier = require('../notifier'),
-  jobs = require('../modules/jobs');
+  jobs = require('../api/modules/jobs');
 
 describe('Notifier', function() {
   describe('Start', function() {
