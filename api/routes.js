@@ -3,7 +3,9 @@
 var express = require('express'),
   controllers = require('./controllers/index'),
   bodyParser = require('body-parser'),
-  //urlencodeParser = bodyParser.urlencoded({ extended: false }),
+  urlencodeParser = bodyParser.urlencoded({
+    extended: false
+  }),
   jsonParser = bodyParser.json();
 
 exports = module.exports = function(app) {
@@ -12,9 +14,11 @@ exports = module.exports = function(app) {
   app.get('/api/profiles/v1/jobs/:id.json', controllers.jobs.get);
   app.get('/api/profiles/v2/search/jobs.json', controllers.jobs.list);
   app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
+
   // account
-  app.post('/account', jsonParser, controllers.account.create);
-  app.post('/account/:userid', jsonParser, controllers.account.update); // TODO: actually should be PUT
+  app.post('/account', urlencodeParser, jsonParser, controllers.account.create);
+  app.post('/account/:userid', urlencodeParser, jsonParser, controllers.account.update); // Needed for old android builds
+  app.put('/account/:userid', urlencodeParser, jsonParser, controllers.account.update);
   app.get('/accounts/:userid', controllers.account.get);
 
   // swagger

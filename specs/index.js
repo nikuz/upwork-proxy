@@ -11,9 +11,13 @@ var specs = [
 ];
 
 describe('upwork-proxy API specs', function() {
-  var target = './' + process.env.SPECS_TARGET;
-  if (target && _.contains(specs, target)) {
-    require(target);
+  if (process.env.SPECS_TARGET) {
+    var target = './' + process.env.SPECS_TARGET;
+    if (_.contains(specs, target)) {
+      require(target);
+    } else {
+      console.log('Target specs doesn\'t exists');
+    }
   } else {
     _.each(specs, function(item) {
       require(item);

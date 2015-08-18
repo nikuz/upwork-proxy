@@ -146,7 +146,7 @@ paths:
           schema:
             $ref: "#/definitions/ErrorResponse"
   /account/{userid}:
-    post:
+    put:
       summary: Update an account
       description: Update an account of specific user. Returns success or error if failed.
       operationId: account-update

@@ -3,26 +3,24 @@
 var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
-  jobs = require('../api/modules/jobs');
+  config = require('../config.json'),
+  request = require('../api/request'),
+  baseUrl = 'http://localhost:8020';
 
 describe('Jobs', function() {
   describe('Get', function() {
     it('should return info of specific job by id', function(done) {
-      var jobId = '~010e6fbc3fb9ec7573';
-      jobs.get({
-        id: jobId
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      var jobUrl = config.API_job_url,
+        jobId = '~010e6fbc3fb9ec7573',
+        url = jobUrl.replace('{id}', jobId);
+
+      request.get(baseUrl + url, null, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.auth_user).to.be.an('object');
         expect(response.profile).to.be.an('object');
         expect(response.profile.ciphertext).to.eql(jobId);
-        done();
-      });
-    });
-    it('should return error if job id is not defined', function(done) {
-      jobs.get({}, function(err) {
-        expect(!!err).to.eql(true);
         done();
       });
     });
@@ -30,24 +28,28 @@ describe('Jobs', function() {
 
   describe('List', function() {
     it('should return list of jobs', function(done) {
-      jobs.list({
+      var params = {
         q: 'java',
         paging: '0;5'
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      };
+      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.jobs).to.be.an('array');
         expect(response.jobs.length).to.eql(5);
         done();
       });
     });
     it('should return list of jobs which contain "java" word in his title', function(done) {
-      jobs.list({
+      var params = {
         title: 'java',
         paging: '0;5'
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      };
+      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.jobs).to.be.an('array');
         expect(response.jobs.length).to.eql(5);
         _.each(response.jobs, function(item) {
@@ -57,12 +59,14 @@ describe('Jobs', function() {
       });
     });
     it('should return list of jobs which contain "java" word in his skills', function(done) {
-      jobs.list({
+      var params = {
         skills: 'java',
         paging: '0;5'
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      };
+      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.jobs).to.be.an('array');
         expect(response.jobs.length).to.eql(5);
         _.each(response.jobs, function(item) {
@@ -81,18 +85,19 @@ describe('Jobs', function() {
       });
     });
     it('should return list of jobs from specific category', function(done) {
-      var category = 'Web, Mobile & Software Dev';
-      jobs.list({
+      var params = {
         q: 'java',
         paging: '0;5',
-        category2: category
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+        category2: 'Web, Mobile & Software Dev'
+      };
+      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.jobs).to.be.an('array');
         expect(response.jobs.length).to.eql(5);
         _.each(response.jobs, function(item) {
-          expect(item.category2).to.eql(category);
+          expect(item.category2).to.eql(params.category2);
         });
         done();
       });
@@ -106,13 +111,15 @@ describe('Jobs', function() {
         {Ongoing: 'More than 6 months'}
       ];
       async.each(durations, function(duration, internalCallback) {
-        jobs.list({
+        var params = {
           q: 'java',
           paging: '0;100',
           duration: _.keys(duration)[0].toLowerCase()
-        }, function(err, response) {
-          expect(!!err).to.eql(false);
-          response = JSON.parse(response);
+        };
+        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+          expect(err).to.eql(null);
+          expect(response).to.be.an('object');
+          expect(!!response.error).to.eql(false);
           expect(response.jobs).to.be.an('array');
           expect(response.jobs.length).to.eql(100);
           _.each(response.jobs, function(item) {
@@ -132,13 +139,15 @@ describe('Jobs', function() {
         {Fixed: 'Fixed'}
       ];
       async.each(jobTypes, function(type, internalCallback) {
-        jobs.list({
+        var params = {
           q: 'java',
           paging: '0;100',
           job_type: _.keys(type)[0].toLowerCase()
-        }, function(err, response) {
-          expect(!!err).to.eql(false);
-          response = JSON.parse(response);
+        };
+        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+          expect(err).to.eql(null);
+          expect(response).to.be.an('object');
+          expect(!!response.error).to.eql(false);
           expect(response.jobs).to.be.an('array');
           expect(response.jobs.length).to.eql(100);
           _.each(response.jobs, function(item) {
@@ -173,13 +182,15 @@ describe('Jobs', function() {
         }
       ];
       async.each(workloads, function(workload, internalCallback) {
-        jobs.list({
+        var params = {
           q: 'java',
           paging: '0;100',
           workload: _.keys(workload)[0].toLowerCase()
-        }, function(err, response) {
-          expect(!!err).to.eql(false);
-          response = JSON.parse(response);
+        };
+        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+          expect(err).to.eql(null);
+          expect(response).to.be.an('object');
+          expect(!!response.error).to.eql(false);
           expect(response.jobs).to.be.an('array');
           expect(response.jobs.length).to.eql(100);
           _.each(response.jobs, function(item) {
@@ -194,13 +205,15 @@ describe('Jobs', function() {
       });
     });
     it('should return list of jobs sorted descending', function(done) {
-      jobs.list({
+      var params = {
         q: 'java',
         paging: '0;20',
         sort: 'create_time desc'
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      };
+      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.jobs).to.be.an('array');
         expect(response.jobs.length).to.eql(20);
         var prevJobCreatedTime = response.jobs[0].date_created;
@@ -211,33 +224,14 @@ describe('Jobs', function() {
         done();
       });
     });
-    // unreliable, upwork can return jobs outside the budget interval
-    //it('should return list of jobs from specific budget interval', function(done) {
-    //  jobs.list({
-    //    q: 'javascript',
-    //    paging: '0;20',
-    //    budget: '[100 TO 200]'
-    //  }, function(err, response) {
-    //    expect(!!err).to.eql(false);
-    //    response = JSON.parse(response);
-    //    expect(response.jobs).to.be.an('array');
-    //    expect(response.jobs.length).to.eql(20);
-    //    _.each(response.jobs, function(item) {
-    //      if (item.budget !== null) { // some jobs has't budget param
-    //        expect(item.budget).to.be.least(100);
-    //        expect(item.budget).to.be.most(200);
-    //      }
-    //    });
-    //    done();
-    //  });
-    //});
   });
 
   describe('Get categories', function() {
     it('should return list of available categories', function(done) {
-      jobs.categoriesList({}, function(err, response) {
-        expect(!!err).to.eql(false);
-        response = JSON.parse(response);
+      request.get(baseUrl + config.API_jobs_categories_url, null, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.categories).to.be.an('array');
         expect(response.categories).to.have.length.above(0);
         done();

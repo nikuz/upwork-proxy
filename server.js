@@ -2,35 +2,25 @@
 
 var express = require('express'),
   swagger = require('swagger-express-mw'),
-  app = express(),
-  PORT = Number(process.env.PORT || 8020),
-  SERVER = String(process.env.SERVER_NAME || 'localhost'),
-  DEV, PROD;
+  env = require('dotenv'),
+  app = express();
 
-app.SERVER = SERVER;
-app.PORT = PORT;
+env.load(); // load __dirname/.env file
+
+app.SERVER = process.env.SERVER_NAME;
+app.PORT = process.env.PORT;
 
 process.argv.forEach(function(val) {
-  switch (val) {
-    case 'dev':
-      DEV = true;
-      break;
-    case 'prod':
-      PROD = true;
-      break;
+  if (val === 'dev') {
+    process.env.CURRENT_ENV = 'DEV';
   }
 });
 
-if (DEV) {
-  console.log('Running DEV server...');
-  process.env.CURRENT_ENV = 'DEV';
-} else if (PROD) {
-  console.log('Running PROD server...');
-  process.env.CURRENT_ENV = 'PROD';
-} else {
-  console.log('Running TEST server...');
+if (!process.env.CURRENT_ENV) {
   process.env.CURRENT_ENV = 'TEST';
 }
+
+console.log('Running %s server...', process.env.CURRENT_ENV);
 
 require('./api/routes')(app);
 
@@ -39,10 +29,12 @@ var config = {
 };
 
 swagger.create(config, function(err, swaggerExpress) {
-  if (err) { throw err; }
+  if (err) {
+    throw err;
+  }
 
   // install middleware
-  swaggerExpress.register(app);
+  //swaggerExpress.register(app);
 
   app.listen(app.PORT, function() {
     console.log('%s:%d - %s', app.SERVER, app.PORT, new Date(Date.now()));

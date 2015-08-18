@@ -18,7 +18,7 @@ exports = module.exports = function(grunt, done, env, target) {
     grunt.option('stack', true);
     require(target)(grunt, done);
   } else {
-    grunt.log.error('Target utility is not exists');
+    grunt.log.error('Target utility doesn\'t exists');
     done(false);
   }
 };

@@ -9,7 +9,9 @@ var _ = require('underscore'),
   addUser2 = data.addUser2,
   fillMinutesUser1 = data.fillMinutesUser1,
   events = require('../api/modules/events'),
-  account = require('../api/modules/account');
+  account = require('../api/modules/account'),
+  request = require('../api/request'),
+  baseUrl = 'http://localhost:8020';
 
 describe('Account', function() {
   describe('Create', function() {
@@ -31,18 +33,20 @@ describe('Account', function() {
     });
 
     it('should allow to create new users', function(done) {
-      account.create(addUser1.params, function(err, response) {
-        expect(!!err).to.eql(false);
+      request.post(baseUrl + '/account', addUser1.params, function(err, response) {
+        expect(err).to.eql(null);
         expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.userid).to.be.an('string');
         expect(response.userid).to.have.length.above(0);
         done();
       });
     });
     it('should return id of user if it already exist', function(done) {
-      account.create(addUser2.params, function(err, response) {
-        expect(!!err).to.eql(false);
+      request.post(baseUrl + '/account', addUser2.params, function(err, response) {
+        expect(err).to.eql(null);
         expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.userid).to.eql(user2id);
         done();
       });
@@ -50,50 +54,10 @@ describe('Account', function() {
     it('should return error if some required field is not defined', function(done) {
       var data = _.clone(addUser1.params);
       delete data.id;
-      account.create(data, function(err) {
-        expect(!!err).to.eql(true);
-        done();
-      });
-    });
-  });
-
-  describe('Fill minutes', function() {
-    var user1id;
-    before(function(done) {
-      fixtures.cleanup(done);
-    });
-
-    beforeEach(function(done) {
-      events.replay([addUser1], function(err, response) {
-        var results = response.results;
-        user1id = results[0] && results[0].userid;
-        done();
-      });
-    });
-
-    afterEach(function(done) {
-      fixtures.cleanup(done);
-    });
-
-    it('should place specific user to minutes topics based on interval', function(done) {
-      account.fillMinutes({
-        userid: user1id,
-        interval: 5,
-        timezone: addUser1.params.timezone
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
+      request.post(baseUrl + '/account', data, function(err, response) {
+        expect(err).to.eql(null);
         expect(response).to.be.an('object');
-        expect(response.success).to.eql(true);
-        done();
-      });
-    });
-    it('should return error if users time zone is not defined or not exists', function(done) {
-      account.fillMinutes({
-        userid: user1id,
-        interval: 5,
-        timezone: '1312123'
-      }, function(err) {
-        expect(!!err).to.eql(true);
+        expect(!!response.error).to.eql(true);
         done();
       });
     });
@@ -120,11 +84,10 @@ describe('Account', function() {
     });
 
     it('should return account of specific user', function(done) {
-      account.get({
-        id: user1id
-      }, function(err, response) {
-        expect(!!err).to.eql(false);
+      request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+        expect(err).to.eql(null);
         expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
         expect(response.id).to.eql(user1id);
         expect(response.push_id).to.eql(addUser1.params.id);
         _.each(response, function(value, key) {
@@ -145,12 +108,17 @@ describe('Account', function() {
         });
         done();
       });
+      account.get({
+        id: user1id
+      }, function(err, response) {
+
+      });
     });
     it('should return error if user is not exists', function(done) {
-      account.get({
-        userid: 'not_exists_user'
-      }, function(err) {
-        expect(!!err).to.eql(true);
+      request.get(baseUrl + '/accounts/not_exists_user', null, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(true);
         done();
       });
     });
@@ -178,20 +146,19 @@ describe('Account', function() {
       async.series([
         function(callback) {
           var params = _.clone(addUser2.params);
-          params.id = user1id;
-          account.update(params, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, params, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.id).to.eql(user1id);
             _.each(response, function(value, key) {
               if (key !== 'id' && !_.isUndefined(addUser2.params[key])) {
@@ -208,9 +175,10 @@ describe('Account', function() {
 
     it('should return error if try to update not exists user', function(done) {
       var params = _.clone(addUser2.params);
-      params.id = 'not_exists_user';
-      account.update(params, function(err) {
-        expect(!!err).to.eql(true);
+      request.put(baseUrl + '/account/not_exists_user', params, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(true);
         done();
       });
     });
@@ -237,25 +205,24 @@ describe('Account', function() {
     it('should update users notification interval', function(done) {
       var updateParams = _.clone(addUser1.params);
       _.extend(updateParams, {
-        id: user1id,
         feeds: 'java',
         notifyInterval: 10
       });
       async.series([
         function(callback) {
-          account.update(updateParams, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, updateParams, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.id).to.eql(user1id);
             var minutes = response.notificationsMinutes;
             expect(minutes).to.be.an('array');
@@ -274,26 +241,25 @@ describe('Account', function() {
     it('should update users notification DND interval', function(done) {
       var updateParams = _.clone(addUser1.params);
       _.extend(updateParams, {
-        id: user1id,
         feeds: 'java',
         dndFrom: '23:00',
         dndTo: '07:00'
       });
       async.series([
         function(callback) {
-          account.update(updateParams, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, updateParams, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.id).to.eql(user1id);
             var minutes = response.notificationsMinutes;
             expect(minutes).to.be.an('array');
@@ -314,25 +280,24 @@ describe('Account', function() {
     it('should update users notification time zone', function(done) {
       var updateParams = _.clone(addUser1.params);
       _.extend(updateParams, {
-        id: user1id,
         feeds: 'java',
         timezone: 240
       });
       async.series([
         function(callback) {
-          account.update(updateParams, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, updateParams, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.id).to.eql(user1id);
             var minutes = response.notificationsMinutes;
             expect(minutes).to.be.an('array');
@@ -358,12 +323,12 @@ describe('Account', function() {
           // add feeds
           var updateParams = _.clone(addUser1.params);
           _.extend(updateParams, {
-            id: user1id,
             feeds: 'java'
           });
-          account.update(updateParams, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, updateParams, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
@@ -372,71 +337,21 @@ describe('Account', function() {
           // disable notifications
           var updateParams = _.clone(addUser1.params);
           _.extend(updateParams, {
-            id: user1id,
             notifyAllow: false
           });
-          account.update(updateParams, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.put(baseUrl + '/account/' + user1id, updateParams, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
-            expect(response.id).to.eql(user1id);
-            var minutes = response.notificationsMinutes;
-            expect(minutes).to.be.an('array');
-            expect(minutes.length).to.eql(0);
-            callback();
-          });
-        }
-      ], function() {
-        done();
-      });
-    });
-  });
-
-  describe('Disable notifications', function() {
-    var user1id;
-    before(function(done) {
-      fixtures.cleanup(done);
-    });
-
-    beforeEach(function(done) {
-      events.replay([addUser1, fillMinutesUser1], function(err, response) {
-        var results = response.results;
-        user1id = results[0] && results[0].userid;
-        done();
-      });
-    });
-
-    afterEach(function(done) {
-      fixtures.cleanup(done);
-    });
-
-    it('should disable notification to specific user', function(done) {
-      async.series([
-        function(callback) {
-          account.disableNotifications({
-            userid: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
-            expect(response).to.be.an('object');
-            expect(response.success).to.eql(true);
-            callback();
-          });
-        },
-        function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
-            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.id).to.eql(user1id);
             var minutes = response.notificationsMinutes;
             expect(minutes).to.be.an('array');
@@ -475,19 +390,19 @@ describe('Account', function() {
           var data = _.clone(addUser2.params);
           data.budgetFrom = '100';
           data.notifyAllow = 'true';
-          account.create(data, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.post(baseUrl + '/account', data, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             userid = response.userid;
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: userid
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + userid, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.budgetFrom).to.eql(100);
             expect(response.notifyAllow).to.eql(true);
             callback();
@@ -501,30 +416,70 @@ describe('Account', function() {
       async.series([
         function(callback) {
           var data = _.clone(addUser2.params);
-          _.extend(data, {
-            id: user1id,
-            budgetFrom: '100',
-            notifyAllow: 'true'
-          });
-          account.update(data, function(err, response) {
-            expect(!!err).to.eql(false);
+          data.budgetFrom = '100';
+          data.notifyAllow = 'true';
+          request.put(baseUrl + '/account/' + user1id, data, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.success).to.eql(true);
             callback();
           });
         },
         function(callback) {
-          account.get({
-            id: user1id
-          }, function(err, response) {
-            expect(!!err).to.eql(false);
+          request.get(baseUrl + '/accounts/' + user1id, null, function(err, response) {
+            expect(err).to.eql(null);
             expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
             expect(response.budgetFrom).to.eql(100);
             expect(response.notifyAllow).to.eql(true);
             callback();
           });
         }
       ], function() {
+        done();
+      });
+    });
+  });
+
+  describe('Url encoded body', function() {
+    var user1id;
+    before(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    beforeEach(function(done) {
+      events.replay([addUser1], function(err, response) {
+        var results = response.results;
+        user1id = results[0] && results[0].userid;
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    it('should create an account even data sent as urlencoded string', function(done) {
+      var data = _.clone(addUser2.params);
+      data['x-urlencoded'] = true;
+      request.post(baseUrl + '/account', data, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
+        expect(response.userid).to.be.an('string');
+        expect(response.userid).to.have.length.above(0);
+        done();
+      });
+    });
+    it('should update an account even data sent as urlencoded string', function(done) {
+      var data = _.clone(addUser2.params);
+      data['x-urlencoded'] = true;
+      request.put(baseUrl + '/account/' + user1id, data, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(false);
+        expect(response.success).to.eql(true);
         done();
       });
     });
