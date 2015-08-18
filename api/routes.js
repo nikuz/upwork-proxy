@@ -21,6 +21,10 @@ exports = module.exports = function(app) {
   app.put('/account/:userid', urlencodeParser, jsonParser, controllers.account.update);
   app.get('/accounts/:userid', controllers.account.get);
 
+  // clients debug
+  app.post('/debug/:userid', jsonParser, controllers.debug.store);
+  app.get('/debug/:userid', jsonParser, controllers.debug.get);
+
   // swagger
   app.use('/docs', express.static('public/swagger'));
   app.use('/swagger.yaml', express.static('api/swagger/swagger.yaml'));
