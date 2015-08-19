@@ -55,14 +55,14 @@ exports = module.exports = function(grunt, done) {
 
   workflow.on('convertFields', function() {
     var i = 0, l = usersInfo.length,
-      tenPercent = l / 10;
+      tenPercent = l > 100 ? l / 10 : 100 / 10;
 
     console.log('Convert fields for %d users', l);
 
     var bar = new ProgressBar('[:bar] :percent :etas', {
       complete: '=',
       incomplete: ' ',
-      width: Math.round(tenPercent),
+      width: 100,
       total: l
     });
     bar.tick(0);
