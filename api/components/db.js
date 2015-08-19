@@ -215,13 +215,18 @@ var pCounter = function(key, callback) {
 
 var pFlushall = function(callback) {
   var cb = callback || noop;
-  db.keys(dbPrefix + '*', function(err, keys) {
-    async.eachSeries(keys, function(key, internalCallback) {
-      db.del(key, internalCallback);
-    }, function(err) {
-      cb(err);
+  if (process.env.CURRENT_ENV !== 'TEST') {
+    console.log('Can\'t flush `%` db. Flush operation available only for `TEST` environment.', process.env.CURRENT_ENV);
+    cb(true);
+  } else {
+    db.keys(dbPrefix + '*', function(err, keys) {
+      async.eachSeries(keys, function(key, internalCallback) {
+        db.del(key, internalCallback);
+      }, function(err) {
+        cb(err);
+      });
     });
-  });
+  }
 };
 
 // ---------
