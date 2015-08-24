@@ -32,7 +32,7 @@ module.exports = function(grunt) {
     // for specs tests
     mochacov: {
       options: {
-        timeout: 1000 * 10,
+        timeout: 1000 * 20,
         reporter: 'spec'
       },
       all: ['specs/index.js']

@@ -226,7 +226,6 @@ var pUpdate = function(options, callback) {
     userinfo,
     requiredFields = [
       'id',
-      'os',
       'budgetFrom',
       'budgetTo',
       'daysPosted',

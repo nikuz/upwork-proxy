@@ -14,21 +14,15 @@
   <button onclick="calToOpener()">Close</button>
   <script type="text/javascript">
     function calToOpener() {
-      var locSearch = window.location.search.split('&'),
-        verifier;
+      var locSearch = window.location.search.split('&');
       locSearch.forEach(function(item) {
         if (item.indexOf('oauth_verifier') !== -1) {
-          verifier = item.split('=')[1];
+          localStorage.setItem('verifier', item.split('=')[1]);
         }
       });
-      if (window.opener) {
-        window.opener.verifierWindowClose(verifier);
-      } else {
-        window.close();
-      }
     }
     setTimeout(function() {
       calToOpener();
-    }, 3000);
+    }, 1000);
   </script>
 </body>
