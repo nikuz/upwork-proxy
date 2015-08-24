@@ -3,50 +3,22 @@
 var _ = require('underscore'),
   async = require('async'),
   db = require('../api/components/db'),
+  account = require('../api/modules/account'),
   ProgressBar = require('progress');
 
-var userFieldsMap = {
-  budgetFrom: 'number',
-  budgetTo: 'number',
-  daysPosted: 'number',
-  notifyInterval: 'number',
-  notifyAllow: 'boolean',
-  useProxy: 'boolean',
-  timezone: 'number'
-};
-
-var convertUserFields = function(data) {
-  _.each(userFieldsMap, function(value, key) {
-    switch (value) {
-      case 'number':
-        if (!_.isUndefined(data[key]) && !_.isNumber(data[key])) {
-          data[key] = Number(data[key]);
-        }
-        break;
-      case 'boolean':
-        if (!_.isUndefined(data[key]) && !_.isBoolean(data[key])) {
-          data[key] = data[key] === 'true';
-        }
-        break;
-    }
-  });
-  return data;
-};
-
-exports = module.exports = function(options, callback) {
-  var cb = callback,
-    workflow = new(require('events').EventEmitter)(),
+exports = module.exports = function(grunt, done) {
+  var workflow = new(require('events').EventEmitter)(),
     usersInfo = [];
 
   workflow.on('downloadUsers', function() {
     console.log('Loading users data...');
     db.hgetall('users', function(err, response) {
       if (err) {
-        cb(err);
+        grunt.log.error(err);
+        done(false);
       } else {
         _.each(response, function(item) {
-          item = convertUserFields(JSON.parse(item));
-          usersInfo.push(item);
+          usersInfo.push(JSON.parse(item));
         });
         workflow.emit('convertFields');
       }
@@ -57,7 +29,7 @@ exports = module.exports = function(options, callback) {
     var i = 0, l = usersInfo.length,
       tenPercent = l > 100 ? l / 10 : 100 / 10;
 
-    console.log('Convert fields for %d users', l);
+    console.log('Restore notifications time topics for %d users', l);
 
     var bar = new ProgressBar('[:bar] :percent :etas', {
       complete: '=',
@@ -67,7 +39,22 @@ exports = module.exports = function(options, callback) {
     });
     bar.tick(0);
     async.eachSeries(usersInfo, function(user, internalCallback) {
-      db.hset('users', user.id, user, internalCallback);
+      if (user.notifyAllow) {
+        account.fillMinutes({
+          userid: user.id,
+          interval: user.notifyInterval,
+          timezone: user.timezone,
+          dndFrom: user.dndFrom,
+          dndTo: user.dndTo
+        }, internalCallback);
+      } else {
+        account.fillMinutes({
+          userid: user.id,
+          interval: user.notifyInterval,
+          timezone: user.timezone,
+          disable: true
+        }, internalCallback);
+      }
       i += 1;
       if (i >= tenPercent) {
         bar.tick(tenPercent);
@@ -76,9 +63,10 @@ exports = module.exports = function(options, callback) {
     }, function(err) {
       bar.tick(l);
       if (err) {
-        cb(err);
+        grunt.log.error(err);
+        done(false);
       } else {
-        cb();
+        done();
       }
     });
   });

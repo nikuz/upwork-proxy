@@ -192,12 +192,13 @@ var process = function(options) {
               data: requestData
             }, function(err, response) {
               if (err) {
-                internalCallback(err);
+                internalCallback();
               } else {
                 try {
                   response = JSON.parse(response);
                 } catch (e) {
-                  return internalCallback('Upwork response is not JSON: ' + response);
+                  console.log('Upwork response is not JSON: ' + response);
+                  return internalCallback();
                 }
                 filterJobs({
                   jobs: response.jobs,

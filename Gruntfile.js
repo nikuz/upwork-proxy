@@ -100,8 +100,9 @@ module.exports = function(grunt) {
   grunt.registerTask('utils', function() {
     var done = this.async(),
       target = grunt.option('target'),
-      env = grunt.option('env');
+      env = grunt.option('env'),
+      args = grunt.option('args');
 
-    require('./utils/index')(grunt, done, env, target);
+    require('./utils/index')(grunt, done, env, target, args);
   });
 };

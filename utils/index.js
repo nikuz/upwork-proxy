@@ -1,14 +1,16 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('underscore'),
+  qs = require('querystring');
 
 var utils = [
-  './account_convert_fields'
+  './account_convert_fields',
+  './restore_notifications_topics'
 ];
 
-exports = module.exports = function(grunt, done, env, target) {
+exports = module.exports = function(grunt, done, env, target, args) {
   env = env && env.toUpperCase();
-  if (env !== 'DEV') {
+  if (!env) {
     env = 'TEST';
   }
   process.env.CURRENT_ENV = env;
@@ -16,9 +18,24 @@ exports = module.exports = function(grunt, done, env, target) {
   target = './' + target;
   if (target && _.contains(utils, target)) {
     grunt.option('stack', true);
-    require(target)(grunt, done);
+    grunt.log.writeln();
+    var options = qs.parse(args) || {};
+    require(target)(options, function(err, response) {
+      if (err) {
+        grunt.log.error(err);
+        done(false);
+      } else {
+        if (response) {
+          grunt.log.writeln(response);
+        }
+        done();
+      }
+    });
   } else {
-    grunt.log.error('Target utility doesn\'t exists');
+    grunt.log.error('Select one:');
+    _.each(utils, function(item) {
+      grunt.log.error(item.replace('./', ''));
+    });
     done(false);
   }
 };
