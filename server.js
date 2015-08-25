@@ -41,7 +41,8 @@ swagger.create(config, function(err, swaggerExpress) {
   });
 });
 
-require('./notifier').start();
+var notifier = require('./notifier');
+notifier.start();
 
 var getRandomFromRange = function(min, max) {
   return Math.random() * (max - min) + min;
@@ -49,6 +50,8 @@ var getRandomFromRange = function(min, max) {
 
 // exit node every 30-45 minutes. This is going to help with fixing memory leaks
 setTimeout(function() {
-  console.log('Planned shutdown...');
-  process.exit(1);
+  notifier.checkInProgress(function() {
+    console.log('Planned shutdown...');
+    process.exit(1);
+  });
 }, getRandomFromRange(30, 45) * 60 * 1000);

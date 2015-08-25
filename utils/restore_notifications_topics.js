@@ -27,7 +27,9 @@ exports = module.exports = function(grunt, done) {
 
   workflow.on('convertFields', function() {
     var i = 0, l = usersInfo.length,
-      tenPercent = l > 100 ? l / 10 : 100 / 10;
+      tenPercent = l > 100 ? l / 10 : 100 / 10,
+      enabledUsers = 0,
+      disabledUsers = 0;
 
     console.log('Restore notifications time topics for %d users', l);
 
@@ -39,7 +41,8 @@ exports = module.exports = function(grunt, done) {
     });
     bar.tick(0);
     async.eachSeries(usersInfo, function(user, internalCallback) {
-      if (user.notifyAllow) {
+      if (user.notifyAllow && user.updated && Date.now() - new Date(user.updated).getTime() < 864e5 * 2 && user.push_id) {
+        enabledUsers += 1;
         account.fillMinutes({
           userid: user.id,
           interval: user.notifyInterval,
@@ -48,6 +51,7 @@ exports = module.exports = function(grunt, done) {
           dndTo: user.dndTo
         }, internalCallback);
       } else {
+        disabledUsers += 1;
         account.fillMinutes({
           userid: user.id,
           interval: user.notifyInterval,
@@ -66,6 +70,8 @@ exports = module.exports = function(grunt, done) {
         grunt.log.error(err);
         done(false);
       } else {
+        console.log('Enabled: %d', enabledUsers);
+        console.log('Disabled: %d', disabledUsers);
         done();
       }
     });

@@ -10,7 +10,8 @@ var _ = require('underscore'),
   notificationsModule = require('./api/modules/notifications'),
   timeZones = require('./data/timezones'),
   interval = 6e4 * 5, // 5 minutes
-  sessionJob = 0;
+  sessionJob = 0,
+  inProgress;
 
 var noop = function() {};
 
@@ -119,6 +120,7 @@ var process = function(options) {
     users,
     notifications = [];
 
+  inProgress = true;
   console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
   async.series([
     function(callback) {
@@ -256,6 +258,7 @@ var process = function(options) {
         });
       }
     }
+    inProgress = false;
   });
 };
 
@@ -304,6 +307,16 @@ var pFilterJobs = function(options, callback) {
   filterJobs(options, callback);
 };
 
+var pCheckInProgress = function(callback) {
+  if (inProgress) {
+    setTimeout(function() {
+      pCheckInProgress(callback);
+    }, 5000);
+  } else {
+    callback();
+  }
+};
+
 // ---------
 // interface
 // ---------
@@ -311,5 +324,6 @@ var pFilterJobs = function(options, callback) {
 exports = module.exports = {
   start: pStart,
   filterJobs: pFilterJobs,
-  calculateMinutes: pCalculateMinutes
+  calculateMinutes: pCalculateMinutes,
+  checkInProgress: pCheckInProgress
 };
