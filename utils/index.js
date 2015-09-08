@@ -32,9 +32,13 @@ exports = module.exports = function(grunt, done, env, target, args) {
       }
     });
   } else {
-    grunt.log.error('Select one:');
+    grunt.log.error('');
+    grunt.log.writeln('Usage:');
+    grunt.log.writeln('grunt utils --target=utilityName [--env=dev|prod] [--args="arg1=argValue"]');
+    grunt.log.writeln();
+    grunt.log.writeln('Available utils:');
     _.each(utils, function(item) {
-      grunt.log.error(item.replace('./', ''));
+      grunt.log.writeln(' - ' + item.replace('./', ''));
     });
     done(false);
   }

@@ -31,6 +31,12 @@ var pGet = function(options, callback) {
       if (err) {
         cb(err);
       } else {
+        try {
+          JSON.parse(response);
+        } catch (e) {
+          console.log('Upwork is down');
+          response = 'upwork_is_down';
+        }
         cb(null, response);
       }
     });
@@ -65,6 +71,12 @@ var pList = function(options, callback) {
       if (err) {
         cb(err);
       } else {
+        try {
+          JSON.parse(response);
+        } catch (e) {
+          console.log('Upwork is down');
+          response = 'upwork_is_down';
+        }
         cb(null, response);
       }
     });
