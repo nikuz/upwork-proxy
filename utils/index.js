@@ -5,7 +5,8 @@ var _ = require('underscore'),
 
 var utils = [
   './account_convert_fields',
-  './restore_notifications_topics'
+  './restore_notifications_topics',
+  './dbSize'
 ];
 
 exports = module.exports = function(grunt, done, env, target, args) {
@@ -22,6 +23,7 @@ exports = module.exports = function(grunt, done, env, target, args) {
     var options = qs.parse(args) || {};
     require(target)(options, function(err, response) {
       if (err) {
+        grunt.option('stack', false);
         grunt.log.error(err);
         done(false);
       } else {
