@@ -2,6 +2,8 @@
 
 var _ = require('underscore');
 
+process.env.CURRENT_ENV = 'TEST';
+
 var tests = [
   './jobs',
   './account'

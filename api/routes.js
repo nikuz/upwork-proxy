@@ -25,5 +25,7 @@ exports = module.exports = function(app) {
   app.post('/debug/:userid', jsonParser, controllers.debug.store);
   app.get('/debug/:userid', jsonParser, controllers.debug.get);
 
-  // swagger routes see in Nginx config, because it's public static content
+  // swagger
+  app.use('/docs', express.static(__dirname + '/../public/swagger'));
+  app.use('/swagger.yaml', express.static(__dirname + '/swagger/swagger.yaml'));
 };

@@ -38,6 +38,7 @@ var pUpdate = function(req, res) {
   var body = req.body || {};
   account.update({
     id: req.params.userid,
+    os: body.os,
     feeds: body.feeds,
     budgetFrom: body.budgetFrom,
     budgetTo: body.budgetTo,
