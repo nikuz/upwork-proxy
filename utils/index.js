@@ -6,6 +6,7 @@ var _ = require('underscore'),
 var utils = [
   './account_convert_fields',
   './restore_notifications_topics',
+  './dbClone',
   './dbSize'
 ];
 
