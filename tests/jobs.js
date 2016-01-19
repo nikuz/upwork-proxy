@@ -5,7 +5,14 @@ var _ = require('underscore'),
   expect = require('chai').expect,
   config = require('../config'),
   request = require('../app/request'),
-  baseUrl = 'http://localhost:8020';
+  token = process.env.API_token,
+  token_secret = process.env.API_token_secret,
+  querystring = require('querystring'),
+  baseUrl = 'http://localhost:8020',
+  tokenParams = {
+    token,
+    token_secret
+  };
 
 describe('Jobs', function() {
   describe('Get', function() {
@@ -14,7 +21,7 @@ describe('Jobs', function() {
         jobId = '~010e6fbc3fb9ec7573',
         url = jobUrl.replace('{id}', jobId);
 
-      request.get(baseUrl + url, null, function(err, response) {
+      request.get(baseUrl + url, tokenParams, function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -32,7 +39,7 @@ describe('Jobs', function() {
         q: 'java',
         paging: '0;5'
       };
-      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+      request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -46,7 +53,7 @@ describe('Jobs', function() {
         title: 'java',
         paging: '0;5'
       };
-      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+      request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -63,7 +70,7 @@ describe('Jobs', function() {
         skills: 'java',
         paging: '0;5'
       };
-      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+      request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -90,7 +97,7 @@ describe('Jobs', function() {
         paging: '0;5',
         category2: 'Web, Mobile & Software Dev'
       };
-      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+      request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -116,7 +123,7 @@ describe('Jobs', function() {
           paging: '0;100',
           duration: _.keys(duration)[0].toLowerCase()
         };
-        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
           expect(err).to.eql(null);
           expect(response).to.be.an('object');
           expect(!!response.error).to.eql(false);
@@ -144,7 +151,7 @@ describe('Jobs', function() {
           paging: '0;100',
           job_type: _.keys(type)[0].toLowerCase()
         };
-        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
           expect(err).to.eql(null);
           expect(response).to.be.an('object');
           expect(!!response.error).to.eql(false);
@@ -187,7 +194,7 @@ describe('Jobs', function() {
           paging: '0;100',
           workload: _.keys(workload)[0].toLowerCase()
         };
-        request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+        request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
           expect(err).to.eql(null);
           expect(response).to.be.an('object');
           expect(!!response.error).to.eql(false);
@@ -210,7 +217,7 @@ describe('Jobs', function() {
         paging: '0;20',
         sort: 'create_time desc'
       };
-      request.get(baseUrl + config.API_jobs_url, params, function(err, response) {
+      request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);
@@ -228,7 +235,7 @@ describe('Jobs', function() {
 
   describe('Get categories', function() {
     it('should return list of available categories', function(done) {
-      request.get(baseUrl + config.API_jobs_categories_url, null, function(err, response) {
+      request.get(baseUrl + config.API_jobs_categories_url, tokenParams, function(err, response) {
         expect(err).to.eql(null);
         expect(response).to.be.an('object');
         expect(!!response.error).to.eql(false);

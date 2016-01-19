@@ -4,7 +4,7 @@ var _ = require('underscore'),
   config = require('../../config'),
   upwork = require('../modules/upwork'),
   log = require('../modules/log'),
-  constants = require('../constants')(),
+  validator = require('../modules/validator'),
   EventEmitter = require('events').EventEmitter;
 
 // ----------------
@@ -22,19 +22,29 @@ function pGet(req, res) {
       }
       res.send(result);
     },
+    token = req.query.token,
+    token_secret = req.query.token_secret,
     jobid = req.params.id;
 
   workflow.on('validateParams', function() {
-    if (!jobid) {
-      cb(constants.REQUIRED('id'));
-    } else {
-      workflow.emit('getJob');
-    }
+    validator.check({
+      jobid: ['string', jobid],
+      token: ['string', token],
+      token_secret: ['string', token_secret]
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('getJob');
+      }
+    });
   });
 
   workflow.on('getJob', function() {
     upwork.request({
-      url: config.API_job_url.replace('{id}', jobid)
+      url: config.API_job_url.replace('{id}', jobid),
+      token,
+      token_secret
     }, function(err, response) {
       if (err) {
         cb(err);
@@ -64,13 +74,12 @@ function pList(req, res) {
       }
       res.send(result);
     },
-    opts = {
-      q: req.query.q,
+    token = req.query.token,
+    token_secret = req.query.token_secret,
+    searchValue = req.query.q || req.query.title || req.query.skills,
+    data = {
       category2: req.query.category2,
-      title: req.query.title,
-      skills: req.query.skills,
       budget: req.query.budget,
-      days_posted: req.query.days_posted,
       duration: req.query.duration,
       job_type: req.query.job_type,
       workload: req.query.workload,
@@ -79,22 +88,37 @@ function pList(req, res) {
     };
 
   workflow.on('validateParams', function() {
-    if (!opts.q && !opts.title && !opts.skills) {
-      cb(constants.ONE_REQUIRED(['q', 'title', 'skills']));
-    } else {
-      workflow.emit('getJobs');
-    }
+    validator.check({
+      searchValue: ['string', searchValue],
+      token: ['string', token],
+      token_secret: ['string', token_secret]
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('getJobs');
+      }
+    });
   });
 
   workflow.on('getJobs', function() {
-    _.each(opts, function(item, key) {
+    _.each(data, function(item, key) {
       if (_.isUndefined(item)) {
-        delete opts[key];
+        delete data[key];
       }
     });
+    var searchField = 'q';
+    if (req.query.title) {
+      searchField = 'title';
+    } else if (req.query.skills) {
+      searchField = 'skills';
+    }
+    data[searchField] = searchValue;
     upwork.request({
       url: config.API_jobs_url,
-      data: opts
+      token,
+      token_secret,
+      data
     }, function(err, response) {
       if (err) {
         cb(err);

@@ -25,9 +25,9 @@ var pRequest = function(options, callback) {
   var opts = options,
     cb = callback,
     url = opts.url,
-    method = opts.method || 'GET';
-
-  var token = process.env.API_token,
+    token = opts.token || process.env.API_token,
+    token_secret = opts.token_secret || process.env.API_token_secret,
+    method = opts.method || 'GET',
     request_data = {
       url: config.API_url + url,
       method: method,
@@ -36,7 +36,7 @@ var pRequest = function(options, callback) {
     urlDelimiter;
 
   request_data = oauth.authorize(request_data, {
-    secret: process.env.API_token_secret
+    secret: token_secret
   });
 
   url = config.API_url + url;

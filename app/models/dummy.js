@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports.getTrue = function(options, callback) {
-  callback = callback || function() {};
-  callback(null, {
+  var cb = callback || function() {};
+  cb(null, {
     success: true
   });
 };

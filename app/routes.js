@@ -25,7 +25,6 @@ exports = module.exports = function(app) {
   app.get('/accounts/:userid/debug', controllers.debug.get);
 
   // jobs
-  app.get('/jobs', controllers.jobs.list);
   app.get('/api/profiles/v1/jobs/:id.json', controllers.jobs.get);
   app.get('/api/profiles/v2/search/jobs.json', controllers.jobs.list);
   app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
