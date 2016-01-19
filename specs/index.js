@@ -5,11 +5,10 @@ var _ = require('underscore'),
 
 env.load();
 
-process.env.CURRENT_ENV = 'TEST';
-
 var specs = [
   './account',
-  './notifier'
+  './notifier',
+  './cache'
 ];
 
 describe('upwork-proxy API specs', function() {

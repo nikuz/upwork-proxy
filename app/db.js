@@ -39,9 +39,7 @@ if (!db) {
   });
 }
 
-var noop = function() {};
-
-var getMembersScores = function(members) {
+function getMembersScores(members) {
   var scoresList = _.groupBy(members, function(a, b) {
       return Math.floor(b / 2);
     }),
@@ -55,9 +53,9 @@ var getMembersScores = function(members) {
     names: names,
     scores: scores
   };
-};
+}
 
-var getMembers = function(topic, members, options, callback) {
+function getMembers(topic, members, options, callback) {
   var opts = options || {},
     showAll = opts.per_page === 0,
     page = showAll ? 1 : (opts.page || 1),
@@ -88,22 +86,14 @@ var getMembers = function(topic, members, options, callback) {
       callback(null, result);
     }
   });
-};
-
-db.on('error', function(err) {
-  log.captureMessage(constants.DATABASE_ERROR(), {
-    extra: {
-      err: err
-    }
-  });
-});
+}
 
 // ----------------
 // public functions
 // ----------------
 
-var pMulti = function(operations, callback) {
-  var cb = callback || noop,
+function pMulti(operations, callback) {
+  var cb = callback || _.noop,
     multi = db.multi();
 
   if (!_.isArray(operations)) {
@@ -113,7 +103,7 @@ var pMulti = function(operations, callback) {
 
   _.each(operations, function(oItem) {
     var operation = oItem.operation,
-      topic = dbPrefix + 'z:' + oItem.topic;
+      topic = `${dbPrefix}z:${oItem.topic}`;
 
     switch (operation) {
       case 'zadd':
@@ -131,10 +121,34 @@ var pMulti = function(operations, callback) {
     }
   });
   multi.exec(cb);
-};
+}
 
-var pHget = function(topic, id, callback) {
-  var cb = callback || noop;
+function pSet(topic, ttl, data, callback) {
+  var cb = callback || _.noop;
+  if (topic && _.isString(topic) && ttl && _.isNumber(ttl) && data && _.isString(data)) {
+    let multi = db.multi();
+    multi.set(dbPrefix + 's:' + topic, data);
+    multi.expire(dbPrefix + 's:' + topic, ttl);
+    multi.exec(function(err, replies) {
+      replies = err ? replies[1] : JSON.parse(replies[1]);
+      cb(err, replies);
+    });
+  } else {
+    cb(true, null);
+  }
+}
+
+function pGet(topic, callback) {
+  var cb = callback || _.noop;
+  if (topic) {
+    db.get(dbPrefix + 's:' + topic, cb);
+  } else {
+    cb(true, null);
+  }
+}
+
+function pHget(topic, id, callback) {
+  var cb = callback || _.noop;
   if (topic && id) {
     db.hget(dbPrefix + topic, id, function(err, reply) {
       cb(err, err ? reply : JSON.parse(reply));
@@ -142,10 +156,10 @@ var pHget = function(topic, id, callback) {
   } else {
     cb(true, null);
   }
-};
+}
 
-var pHset = function(topic, id, data, callback) {
-  var cb = callback || noop;
+function pHset(topic, id, data, callback) {
+  var cb = callback || _.noop;
   if (topic && id && data) {
     db.hset(dbPrefix + topic, id, JSON.stringify(data), function(err, reply) {
       cb(err, reply);
@@ -153,38 +167,38 @@ var pHset = function(topic, id, data, callback) {
   } else {
     cb(true, null);
   }
-};
+}
 
-var pHgetall = function(topic, callback) {
-  var cb = callback || noop;
+function pHgetall(topic, callback) {
+  var cb = callback || _.noop;
   if (topic) {
     db.hgetall(dbPrefix + topic, cb);
   } else {
     cb(true, null);
   }
-};
+}
 
-var pZrem = function(topic, id, callback) {
-  var cb = callback || noop;
+function pZrem(topic, id, callback) {
+  var cb = callback || _.noop;
   db.zrem(dbPrefix + 'z:' + topic, id, function(err) {
     cb(err);
   });
-};
+}
 
-var pZadd = function(topic, score, id, callback) {
-  var cb = callback || noop;
+function pZadd(topic, score, id, callback) {
+  var cb = callback || _.noop;
   db.zadd(dbPrefix + 'z:' + topic, score, id, function(err) {
     cb(err);
   });
-};
+}
 
-var pZall = function(topic, callback) {
-  var cb = callback || noop;
+function pZall(topic, callback) {
+  var cb = callback || _.noop;
   db.zrevrange(dbPrefix + 'z:' + topic, 0, -1, cb);
-};
+}
 
-var pUnion = function(topics, metatopic, callback) {
-  var cb = callback || noop,
+function pUnion(topics, metatopic, callback) {
+  var cb = callback || _.noop,
     opts = {},
     tags = [],
     cmd,
@@ -209,15 +223,15 @@ var pUnion = function(topics, metatopic, callback) {
   } else {
     cb(true, null);
   }
-};
+}
 
-var pCounter = function(key, callback) {
-  var cb = callback || noop;
+function pCounter(key, callback) {
+  var cb = callback || _.noop;
   db.incr(dbPrefix + key, cb);
-};
+}
 
-var pFlushall = function(callback) {
-  var cb = callback || noop;
+function pFlushall(callback) {
+  var cb = callback || _.noop;
   if (process.env.CURRENT_ENV !== 'TEST') {
     console.log('Can\'t flush `%` db. Flush operation available only for `TEST` environment.', process.env.CURRENT_ENV);
     cb(true);
@@ -230,7 +244,7 @@ var pFlushall = function(callback) {
       });
     });
   }
-};
+}
 
 // ---------
 // interface
@@ -238,6 +252,8 @@ var pFlushall = function(callback) {
 
 exports = module.exports = {
   multi: pMulti,
+  set: pSet,
+  get: pGet,
   hget: pHget,
   hset: pHset,
   hgetall: pHgetall,
@@ -248,4 +264,3 @@ exports = module.exports = {
   counter: pCounter,
   flushall: pFlushall
 };
-

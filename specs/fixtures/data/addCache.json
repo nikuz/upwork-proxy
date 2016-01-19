@@ -1,0 +1,7 @@
+{
+  "modelOperation": "cache.store",
+  "params": {
+    "id": "cache_id",
+    "data": "some data"
+  }
+}

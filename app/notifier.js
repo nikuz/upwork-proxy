@@ -8,7 +8,7 @@ var _ = require('underscore'),
   account = require('./models/account'),
   log = require('./modules/log'),
   notificationsModule = require('./modules/notifications'),
-  timeZones = require('./../data/timezones'),
+  timeZones = require('../data/timezones'),
   interval = 6e4 * 5; // 5 minutes;
 
 var filterJobs = function(options, callback) {

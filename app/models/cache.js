@@ -2,29 +2,41 @@
 
 var _ = require('underscore'),
   db = require('../db'),
-  account = require('./account'),
+  crypto = require('crypto'),
+  constants = require('../constants')(),
   validator = require('../modules/validator'),
-  EventEmitter = require('events').EventEmitter;
+  EventEmitter = require('events').EventEmitter,
+  cacheTTL = 1000 * 60 * 5; // 5 minutes;
+
+if (process.env.CURRENT_ENV === 'TEST') {
+  cacheTTL = 3; // 3 seconds
+}
 
 // ----------------
 // public functions
 // ----------------
 
+function pGetId(options) {
+  if (!_.isObject(options) || !_.size(options)) {
+    return constants.OBJECT_REQUIRED('options');
+  }
+
+  var md5sum = crypto.createHash('md5');
+  md5sum.update(JSON.stringify(options));
+  return md5sum.digest('hex');
+}
+
 function pStore(options, callback) {
   var workflow = new EventEmitter(),
     cb = callback || _.noop,
     opts = options || {},
-    userid = opts.userid,
+    id = opts.id,
     data = opts.data;
 
   workflow.on('validateParams', function() {
     validator.check({
-      userid: ['string', userid, function(internalCallback) {
-        account.get({
-          userid
-        }, internalCallback);
-      }],
-      data: ['object', data]
+      id: ['string', id],
+      data: ['string', data]
     }, function(err) {
       if (err) {
         cb(err);
@@ -35,7 +47,7 @@ function pStore(options, callback) {
   });
 
   workflow.on('store', function() {
-    db.hset('users:debug', userid, data, function(err) {
+    db.set(`cache:${id}`, cacheTTL, data, function(err) {
       if (err) {
         cb(err);
       } else {
@@ -53,15 +65,11 @@ function pGet(options, callback) {
   var workflow = new EventEmitter(),
     cb = callback || _.noop,
     opts = options || {},
-    userid = opts.userid;
+    id = opts.id;
 
   workflow.on('validateParams', function() {
     validator.check({
-      userid: ['string', userid, function(internalCallback) {
-        account.get({
-          userid
-        }, internalCallback);
-      }]
+      id: ['string', id]
     }, function(err) {
       if (err) {
         cb(err);
@@ -72,7 +80,7 @@ function pGet(options, callback) {
   });
 
   workflow.on('get', function() {
-    db.hget('users:debug', userid, cb);
+    db.get(`cache:${id}`, cb);
   });
 
   workflow.emit('validateParams');
@@ -83,6 +91,7 @@ function pGet(options, callback) {
 // ---------
 
 exports = module.exports = {
+  getId: pGetId,
   store: pStore,
   get: pGet
 };
