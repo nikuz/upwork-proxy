@@ -23,7 +23,7 @@ var pStoreApi = function(req, res) {
   if (err) {
     result.error = err;
   } else {
-    fs.writeFile(path.join(__dirname, '../swagger/swagger.yaml'), body);
+    fs.writeFile(path.join(__dirname, '../../api.yaml'), body);
     result = {
       success: true
     };

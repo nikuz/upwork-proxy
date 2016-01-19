@@ -27,4 +27,4 @@ app.listen(app.PORT, function() {
   console.log('%s:%d - %s', app.SERVER, app.PORT, new Date(Date.now()));
 });
 
-require('./notifier').start();
+require('./app/notifier').start();

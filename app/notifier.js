@@ -2,13 +2,13 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  db = require('./app/db'),
-  config = require('./config'),
-  upwork = require('./app/modules/upwork'),
-  account = require('./app/models/account'),
-  log = require('./app/modules/log'),
-  notificationsModule = require('./app/modules/notifications'),
-  timeZones = require('./data/timezones'),
+  db = require('./db'),
+  config = require('./../config'),
+  upwork = require('./modules/upwork'),
+  account = require('./models/account'),
+  log = require('./modules/log'),
+  notificationsModule = require('./modules/notifications'),
+  timeZones = require('./../data/timezones'),
   interval = 6e4 * 5; // 5 minutes;
 
 var filterJobs = function(options, callback) {

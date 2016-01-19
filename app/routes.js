@@ -32,8 +32,8 @@ exports = module.exports = function(app) {
 
   // swagger editor
   app.use('/docs', express.static(__dirname + '/../public/swagger'));
-  app.use('/swagger.yaml', express.static(__dirname + '/swagger/swagger.yaml'));
+  app.use('/api.yaml', express.static(__dirname + '/../api.yaml'));
   app.use('/docs/editor', express.static(__dirname + '/../public/swagger-editor'));
-  app.use('/docs/editor/specs', express.static(__dirname + '/swagger/swagger.yaml'));
+  app.use('/docs/editor/specs', express.static(__dirname + '/../api.yaml'));
   app.put('/docs/editor/specs', controllers.utils.storeApi);
 };

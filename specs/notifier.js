@@ -4,7 +4,7 @@ var config = require('../config'),
   _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
-  notifier = require('../notifier'),
+  notifier = require('../app/notifier'),
   upwork = require('../app/modules/upwork');
 
 describe('Notifier', function() {
