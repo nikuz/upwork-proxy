@@ -20,7 +20,7 @@ const dictionary = {
   VALIDATOR_WRONG_TYPE: 'Validator wrong type `%s`',
   VALIDATOR_WRONG_OPTIONS_FORMAT: 'Validator wrong options format in `%s`',
   GREATER_THAN_ZERO_REQUIRED: '`%s` should be greater than 0',
-  WRONG_TIMEZONE: 'Nonexistent time zone',
+  WRONG_TIMEZONE: 'Nonexistent time zone in `%s`',
   UPWORK_REQUEST_ERROR: 'Upwork request error',
   APN_ERROR: 'APN error',
   APN_SOCKET_ERROR: 'APN socket error',

@@ -279,13 +279,26 @@ describe('Account', function() {
     });
 
     it('should update users notification interval', function(done) {
-      var updateParams = _.clone(addUser1.params);
-      _.extend(updateParams, {
-        notifyInterval: 10
-      });
+      var newNotifyInterval = 10;
       async.series([
         function(callback) {
-          request.put(`${baseUrl}/accounts/${user1id}/settings`, updateParams, function(err, response) {
+          // add feeds
+          var data = _.extend(_.clone(addUser1.params), {
+            feeds: 'java'
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          var data = _.extend(_.clone(addUser1.params), {
+            notifyInterval: newNotifyInterval
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/settings`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);
@@ -304,7 +317,7 @@ describe('Account', function() {
             expect(minutes).to.have.length.above(0);
             _.each(minutes, function(item) {
               item = item.split(':');
-              expect(item[1] % updateParams.notifyInterval).to.eql(0);
+              expect(item[1] % newNotifyInterval).to.eql(0);
             });
             callback();
           });
@@ -314,14 +327,26 @@ describe('Account', function() {
       });
     });
     it('should update users notification DND interval', function(done) {
-      var updateParams = _.clone(addUser1.params);
-      _.extend(updateParams, {
-        dndFrom: '23:00',
-        dndTo: '07:00'
-      });
       async.series([
         function(callback) {
-          request.put(`${baseUrl}/accounts/${user1id}/settings`, updateParams, function(err, response) {
+          // add feeds
+          var data = _.extend(_.clone(addUser1.params), {
+            feeds: 'java'
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          var data = _.extend(_.clone(addUser1.params), {
+            dndFrom: '23:00',
+            dndTo: '07:00'
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/settings`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);
@@ -352,13 +377,26 @@ describe('Account', function() {
       });
     });
     it('should update users notification time zone', function(done) {
-      var updateParams = _.clone(addUser1.params);
-      _.extend(updateParams, {
-        timezone: 240
-      });
+      var newTimeZone = 240;
       async.series([
         function(callback) {
-          request.put(`${baseUrl}/accounts/${user1id}/settings`, updateParams, function(err, response) {
+          // add feeds
+          var data = _.extend(_.clone(addUser1.params), {
+            feeds: 'java'
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          var data = _.extend(_.clone(addUser1.params), {
+            timezone: newTimeZone
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/settings`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);
@@ -378,7 +416,7 @@ describe('Account', function() {
             _.each(minutes, function(item) {
               item = item.split(':');
               item[1] = Number(item[1]);
-              expect(item[0]).to.eql(String(updateParams.timezone));
+              expect(item[0]).to.eql(String(newTimeZone));
               expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
               expect(item[1]).to.be.least(360);
               expect(item[1]).to.be.below(1440);
@@ -394,11 +432,10 @@ describe('Account', function() {
       async.series([
         function(callback) {
           // add feeds
-          var updateParams = _.clone(addUser1.params);
-          _.extend(updateParams, {
+          var data = _.extend(_.clone(addUser1.params), {
             feeds: 'java'
           });
-          request.put(`${baseUrl}/accounts/${user1id}/feeds`, updateParams, function(err, response) {
+          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);
@@ -408,11 +445,10 @@ describe('Account', function() {
         },
         function(callback) {
           // disable notifications
-          var updateParams = _.clone(addUser1.params);
-          _.extend(updateParams, {
+          var data = _.extend(_.clone(addUser1.params), {
             notifyAllow: false
           });
-          request.put(`${baseUrl}/accounts/${user1id}/settings`, updateParams, function(err, response) {
+          request.put(`${baseUrl}/accounts/${user1id}/settings`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);

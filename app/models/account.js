@@ -132,7 +132,7 @@ function pUpdate(options, callback) {
       feeds: 'string',
       prevFeeds: 'array',
       token: 'string',
-      token_sekret: 'string',
+      token_secret: 'string',
       category2: 'string',
       budgetFrom: 'number',
       budgetTo: 'number',
@@ -206,8 +206,8 @@ function pUpdateNotificationsInterval(options, callback) {
     opts = options || {},
     cb = callback || _.noop,
     userid = opts.userid,
-    timezone = String(opts.timezone),
-    prevTimezone = opts.prevTimezone && String(opts.prevTimezone);
+    timezone = opts.timezone,
+    prevTimezone = opts.prevTimezone && opts.prevTimezone;
 
   workflow.on('validateParams', function() {
     validator.check({
@@ -216,11 +216,11 @@ function pUpdateNotificationsInterval(options, callback) {
           userid
         }, internalCallback);
       }],
-      timezone: ['string', timezone, function(internalCallback) {
-        internalCallback(!_.contains(timeZones, timezone) ? constants.dictionary.WRONG_TIMEZONE : null);
+      timezone: ['number', timezone, function(internalCallback) {
+        internalCallback(!_.contains(timeZones, timezone) ? constants.WRONG_TIMEZONE('timezone') : null);
       }],
-      prevTimezone: prevTimezone && ['string', prevTimezone, function(internalCallback) {
-        internalCallback(!_.contains(timeZones, prevTimezone) ? constants.dictionary.WRONG_TIMEZONE : null);
+      prevTimezone: prevTimezone && ['number', prevTimezone, function(internalCallback) {
+        internalCallback(!_.contains(timeZones, prevTimezone) ? constants.WRONG_TIMEZONE('prevTimezone') : null);
       }]
     }, function(err) {
       if (err) {

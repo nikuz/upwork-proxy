@@ -14,12 +14,6 @@ exports = module.exports = function(app) {
   }));
   app.use(bodyParser.json());
 
-  // proxy
-  app.get('/jobs', controllers.jobs.list);
-  app.get('/api/profiles/v1/jobs/:id.json', controllers.jobs.get);
-  app.get('/api/profiles/v2/search/jobs.json', controllers.jobs.list);
-  app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
-
   // account
   app.post('/accounts', controllers.account.create);
   app.put('/accounts/:userid/token', controllers.account.addUpworkToken);
@@ -30,10 +24,16 @@ exports = module.exports = function(app) {
   app.post('/accounts/:userid/debug', controllers.debug.store);
   app.get('/accounts/:userid/debug', controllers.debug.get);
 
+  // jobs
+  app.get('/jobs', controllers.jobs.list);
+  app.get('/api/profiles/v1/jobs/:id.json', controllers.jobs.get);
+  app.get('/api/profiles/v2/search/jobs.json', controllers.jobs.list);
+  app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
+
   // swagger editor
   app.use('/docs', express.static(__dirname + '/../public/swagger'));
-  app.use('/swagger.yaml', express.static(__dirname + '/../api/swagger/swagger.yaml'));
+  app.use('/swagger.yaml', express.static(__dirname + '/swagger/swagger.yaml'));
   app.use('/docs/editor', express.static(__dirname + '/../public/swagger-editor'));
-  app.use('/docs/editor/specs', express.static(__dirname + '/../api/swagger/swagger.yaml'));
+  app.use('/docs/editor/specs', express.static(__dirname + '/swagger/swagger.yaml'));
   app.put('/docs/editor/specs', controllers.utils.storeApi);
 };

@@ -274,12 +274,11 @@ function pUpdateSettings(req, res) {
   });
 
   workflow.on('updateNotificationsInterval', function() {
-    var dndFrom = body.dndFrom,
-      dndTo = body.dndTo,
-      fmOpts = {
+    var fmOpts = {
         userid: userid
       },
-      updateInterval = function() {
+      updateInterval = function(options) {
+        _.extend(fmOpts, options);
         account.updateNotificationsInterval(fmOpts, function(err) {
           if (err) {
             cb(err);
@@ -291,26 +290,28 @@ function pUpdateSettings(req, res) {
         });
       };
 
-    if (body.notifyAllow === false && userinfo.notifyAllow === true && userinfo.feeds) {
+    if (!userinfo.feeds) {
+      cb(null, {
+        success: true
+      });
+    } else if (body.notifyAllow === false && userinfo.notifyAllow === true) {
       // if user disable notifications when it was enabled
-      _.extend(fmOpts, {
+      updateInterval({
         timezone: userinfo.timezone
       });
-      updateInterval();
-    } else if (body.notifyAllow === true && (userinfo.notifyAllow === false || userinfo.notifyInterval !== body.notifyInterval || dndFrom !== userinfo.dndFrom || dndTo !== userinfo.dndTo || body.timezone !== userinfo.timezone)) {
+    } else if (body.notifyAllow === true && (userinfo.notifyAllow === false || body.notifyInterval !== userinfo.notifyInterval || body.dndFrom !== userinfo.dndFrom || body.dndTo !== userinfo.dndTo || body.timezone !== userinfo.timezone)) {
       // if user changed notification interval
       // or enabled notifications when it was disabled
       // or changed "Do not disturb" interval
       // or changed timezone
-      _.extend(fmOpts, {
+      updateInterval({
         prevInterval: userinfo.notifyInterval,
         interval: body.notifyInterval,
         timezone: body.timezone,
         prevTimezone: body.timezone !== userinfo.timezone ? userinfo.timezone : null,
-        dndFrom: dndFrom,
-        dndTo: dndTo
+        dndFrom: body.dndFrom,
+        dndTo: body.dndTo
       });
-      updateInterval();
     } else {
       cb(null, {
         success: true
