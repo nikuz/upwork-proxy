@@ -2,22 +2,18 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  db = require('./api/components/db'),
-  config = require('./config.json'),
+  db = require('./api/db'),
+  config = require('./config'),
   upwork = require('./api/modules/upwork'),
-  account = require('./api/modules/account'),
+  account = require('./api/models/account'),
   log = require('./api/modules/log'),
   notificationsModule = require('./api/modules/notifications'),
   timeZones = require('./data/timezones'),
-  interval = 6e4 * 5, // 5 minutes
-  sessionJob = 0,
-  inProgress;
-
-var noop = function() {};
+  interval = 6e4 * 5; // 5 minutes;
 
 var filterJobs = function(options, callback) {
   var opts = options || {},
-    cb = callback || noop,
+    cb = callback || _.noop,
     jobs = opts.jobs,
     limiter = opts.limiter,
     filteredJobs = [];
@@ -34,57 +30,10 @@ var filterJobs = function(options, callback) {
   cb(null, filteredJobs);
 };
 
-//var filterJobs = function(options, callback) {
-//  var opts = options || {},
-//    cb = callback || noop,
-//    jobs = opts.jobs,
-//    user = opts.user,
-//    durations = {
-//      Month: 'Less than 1 month',
-//      Week: 'Less than 1 week',
-//      Quarter: '1 to 3 months',
-//      Semester: '3 to 6 months',
-//      Ongoing: 'More than 6 months'
-//    },
-//    workloads = {
-//      'As needed': [
-//        '30+ hrs/week',
-//        'Less than 10 hrs/week'
-//      ],
-//      'Part time': [
-//        '30+ hrs/week',
-//        '10-30 hrs/week'
-//      ],
-//      'Full time': [
-//        '30+ hrs/week'
-//      ]
-//    },
-//    filteredJobs = [];
-//
-//  _.each(jobs, function(job) {
-//    var suited = true;
-//    if (job.date_created <= user.last_job_date) {
-//      suited = false;
-//    } else if (!_.isNull(job.budget) && (job.budget < Number(user.budgetFrom) || job.budget > Number(user.budgetTo))) {
-//      suited = false;
-//    } else if (user.duration !== 'All' && !_.isNull(job.duration) && job.duration !== durations[user.duration]) {
-//      suited = false;
-//    } else if (user.jobType !== 'All' && !_.isNull(job.job_type) && job.job_type !== user.jobType) {
-//      suited = false;
-//    } else if (user.workload !== 'All' && !_.isNull(job.workload) && !_.contains(workloads[user.workload], job.workload)) {
-//      suited = false;
-//    }
-//    if (suited) {
-//      filteredJobs.push(job);
-//    }
-//  });
-//  cb(null, filteredJobs);
-//};
-
 // calculate current minutes in all time zones
 var calculateMinutes = function(options, callback) {
   var opts = options || {},
-    cb = callback || noop,
+    cb = callback || _.noop,
     today = opts.minute ? new Date(opts.minute) : new Date(),
     curUTCMinute = today.getUTCHours() * 60 + today.getUTCMinutes(),
     minutesPerDay = 1440, // minutes per day
@@ -120,8 +69,7 @@ var process = function(options) {
     users,
     notifications = [];
 
-  inProgress = true;
-  console.log('Start job ' + (sessionJob += 1) + ' at ' + new Date());
+  console.log('Start job at ' + new Date());
   async.series([
     function(callback) {
       //new Date(Date.now() + opts.timeToStartCron).getUTCMinutes()
@@ -146,24 +94,6 @@ var process = function(options) {
         }
       });
     },
-    //function(users, callback) {
-    //  // group users by feeds
-    //  if (users.length) {
-    //    console.log('Users to delivery: %d', users.length);
-    //    var feeds = {};
-    //    _.each(users, function(user) {
-    //      if (!feeds[user.feeds]) {
-    //        feeds[user.feeds] = [];
-    //      }
-    //      feeds[user.feeds].push(user);
-    //    });
-    //    users = null;
-    //    callback(null, feeds);
-    //  } else {
-    //    console.log('No users');
-    //    callback(null, null);
-    //  }
-    //},
     function(callback) {
       // parse users, get new jobs, calculate notifications count
       console.log('Users to delivery: %d', users.length);
@@ -252,13 +182,12 @@ var process = function(options) {
       console.log('Done!');
       if (spentTime > 60) {
         log.captureMessage('Upwork proxy cron job time', {
-            extra: {
-              time: 'Spent time: ' + spentTime
-            }
+          extra: {
+            time: 'Spent time: ' + spentTime
+          }
         });
       }
     }
-    inProgress = false;
   });
 };
 
@@ -268,7 +197,7 @@ var process = function(options) {
 
 var pStart = function(options, callback) {
   var opts = options || {},
-    cb = callback || noop,
+    cb = callback || _.noop,
     today = opts.minute ? new Date(opts.minute) : new Date(),
     i = today.getUTCHours() * 60 + today.getUTCMinutes(),
     l = 1440, // minutes per day
@@ -294,9 +223,6 @@ var pStart = function(options, callback) {
       setInterval(process, interval);
     }, timeToStartCron);
   }
-  //process({
-  //  timeToStartCron: timeToStartCron
-  //});
 };
 
 var pCalculateMinutes = function(options, callback) {
@@ -307,16 +233,6 @@ var pFilterJobs = function(options, callback) {
   filterJobs(options, callback);
 };
 
-var pCheckInProgress = function(callback) {
-  if (inProgress) {
-    setTimeout(function() {
-      pCheckInProgress(callback);
-    }, 5000);
-  } else {
-    callback();
-  }
-};
-
 // ---------
 // interface
 // ---------
@@ -324,6 +240,5 @@ var pCheckInProgress = function(callback) {
 exports = module.exports = {
   start: pStart,
   filterJobs: pFilterJobs,
-  calculateMinutes: pCalculateMinutes,
-  checkInProgress: pCheckInProgress
+  calculateMinutes: pCalculateMinutes
 };

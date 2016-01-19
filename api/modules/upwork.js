@@ -1,18 +1,18 @@
 'use strict';
 
-var config = require('../../config.json'),
+var config = require('../../config'),
   _ = require('underscore'),
-  OAuth = require('../components/oauth'),
+  OAuth = require('./oauth'),
   https = require('https'),
-  constants = require('../components/constants'),
-  log = require('./log'),
+  constants = require('../constants')(),
+  log = require('../modules/log'),
   oauth;
 
 if (!oauth) {
   oauth = OAuth.init({
     consumer: {
-      public: config.API_key,
-      secret: config.API_secret
+      public: process.env.API_key,
+      secret: process.env.API_secret
     }
   });
 }
@@ -27,16 +27,16 @@ var pRequest = function(options, callback) {
     url = opts.url,
     method = opts.method || 'GET';
 
-  var token = config.API_token,
+  var token = process.env.API_token,
     request_data = {
       url: config.API_url + url,
       method: method,
-      data: _.extend(opts.data || {}, token && {oauth_token: token})
+      data: _.extend(opts.data || {}, token && { oauth_token: token })
     },
     urlDelimiter;
 
   request_data = oauth.authorize(request_data, {
-    secret: config.API_token_secret
+    secret: process.env.API_token_secret
   });
 
   url = config.API_url + url;
@@ -59,7 +59,7 @@ var pRequest = function(options, callback) {
       cb(null, data);
     });
   }).on('error', function(e) {
-    log.captureMessage(constants.get('UPWORK_REQUEST_ERROR'), {
+    log.captureMessage(constants.dictionaty.UPWORK_REQUEST_ERROR, {
       extra: {
         err: e.message
       }

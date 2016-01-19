@@ -1,7 +1,7 @@
 'use strict';
 
 var raven = require('raven'),
-  config = require('../../config.json'),
+  config = require('../../config'),
   client;
 
 if (!client) {

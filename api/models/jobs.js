@@ -1,9 +1,9 @@
 'use strict';
 
-var config = require('../../config.json'),
+var config = require('../../config'),
   _ = require('underscore'),
-  upwork = require('./upwork'),
-  constants = require('../components/constants');
+  upwork = require('./../modules/upwork'),
+  constants = require('../constants')();
 
 var noop = function() {};
 

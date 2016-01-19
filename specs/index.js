@@ -1,13 +1,15 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('underscore'),
+  env = require('dotenv');
+
+env.load();
 
 process.env.CURRENT_ENV = 'TEST';
 
 var specs = [
-  './jobs',
-  './notifier',
-  './account'
+  './account',
+  './notifier'
 ];
 
 describe('upwork-proxy API specs', function() {

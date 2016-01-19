@@ -2,5 +2,4 @@ node_modules/*
 log/*
 keys/*
 .env
-config.json
 TODO.txt

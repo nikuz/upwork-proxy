@@ -1,10 +1,8 @@
 'use strict';
 
 var _ = require('underscore'),
-  db = require('../components/db'),
-  constants = require('../components/constants');
-
-var noop = function() {};
+  db = require('../db'),
+  constants = require('../constants')();
 
 // ----------------
 // public functions
@@ -12,7 +10,7 @@ var noop = function() {};
 
 var pStore = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
-    cb = callback || noop,
+    cb = callback || _.noop,
     opts = options || {},
     userid = opts.userid,
     data = opts.data;
@@ -63,7 +61,7 @@ var pStore = function(options, callback) {
 
 var pGet = function(options, callback) {
   var workflow = new(require('events').EventEmitter)(),
-    cb = callback || noop,
+    cb = callback || _.noop,
     opts = options || {},
     userid = opts.userid;
 

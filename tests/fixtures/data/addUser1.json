@@ -1,8 +1,9 @@
 {
-  "operation": "account.create",
+  "controllerOperation": "account.create",
   "params": {
     "id": "1111111111111111111111111111111111111",
     "os": "android",
+    "category2": "Web, Mobile & Software Dev",
     "budgetFrom": 0,
     "budgetTo": 1000000,
     "daysPosted": 50,

@@ -1,10 +1,11 @@
 'use strict';
 
-var _ = require('underscore'),
+var config = require('../config'),
+  _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
   notifier = require('../notifier'),
-  jobs = require('../api/modules/jobs');
+  upwork = require('../api/modules/upwork');
 
 describe('Notifier', function() {
   describe('Start', function() {
@@ -90,9 +91,12 @@ describe('Notifier', function() {
         receivedJobs;
       async.series([
         function(callback) {
-          jobs.list({
-            q: 'javascript',
-            paging: '0;50'
+          upwork.request({
+            url: config.API_jobs_url,
+            data: {
+              q: 'javascript',
+              paging: '0;50'
+            }
           }, function(err, response) {
             expect(!!err).to.eql(false);
             response = JSON.parse(response);

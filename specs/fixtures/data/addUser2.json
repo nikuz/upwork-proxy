@@ -1,8 +1,9 @@
 {
-  "operation": "account.create",
+  "modelOperation": "account.create",
   "params": {
     "id": "222222222222222222222222222222222",
     "os": "ios",
+    "category2": "IT & Networking",
     "budgetFrom": 100,
     "budgetTo": 200,
     "daysPosted": 50,

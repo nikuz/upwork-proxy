@@ -2,8 +2,8 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  db = require('../api/components/db'),
-  account = require('../api/modules/account'),
+  db = require('../api/db'),
+  account = require('../api/models/account'),
   ProgressBar = require('progress');
 
 exports = module.exports = function(grunt, done) {

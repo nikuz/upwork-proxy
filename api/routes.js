@@ -1,14 +1,19 @@
 'use strict';
 
 var express = require('express'),
-  controllers = require('./controllers/index'),
   bodyParser = require('body-parser'),
-  urlencodeParser = bodyParser.urlencoded({
-    extended: false
-  }),
-  jsonParser = bodyParser.json();
+  controllers = require('./controllers/index');
 
 exports = module.exports = function(app) {
+  // settings
+  app.use(bodyParser.urlencoded({
+    extended: false
+  }));
+  app.use(bodyParser.raw({
+    type: 'application/yaml'
+  }));
+  app.use(bodyParser.json());
+
   // proxy
   app.get('/jobs', controllers.jobs.list);
   app.get('/api/profiles/v1/jobs/:id.json', controllers.jobs.get);
@@ -16,16 +21,19 @@ exports = module.exports = function(app) {
   app.get('/api/profiles/v2/metadata/categories.json', controllers.jobs.categoriesList);
 
   // account
-  app.post('/account', urlencodeParser, jsonParser, controllers.account.create);
-  app.post('/account/:userid', urlencodeParser, jsonParser, controllers.account.update); // Needed for old android builds
-  app.put('/account/:userid', urlencodeParser, jsonParser, controllers.account.update);
-  app.get('/accounts/:userid', controllers.account.get);
+  app.post('/accounts', controllers.account.create);
+  app.put('/accounts/:userid/token', controllers.account.addUpworkToken);
+  app.put('/accounts/:userid/feeds', controllers.account.addFeeds);
+  app.put('/accounts/:userid/settings', controllers.account.updateSettings);
+  app.get('/accounts/:userid', controllers.account.accountGet);
+  app.get('/accounts/:userid/stats', controllers.account.stats);
+  app.post('/accounts/:userid/debug', controllers.debug.store);
+  app.get('/accounts/:userid/debug', controllers.debug.get);
 
-  // clients debug
-  app.post('/debug/:userid', jsonParser, controllers.debug.store);
-  app.get('/debug/:userid', jsonParser, controllers.debug.get);
-
-  // swagger
+  // swagger editor
   app.use('/docs', express.static(__dirname + '/../public/swagger'));
-  app.use('/swagger.yaml', express.static(__dirname + '/swagger/swagger.yaml'));
+  app.use('/swagger.yaml', express.static(__dirname + '/../api/swagger/swagger.yaml'));
+  app.use('/docs/editor', express.static(__dirname + '/../public/swagger-editor'));
+  app.use('/docs/editor/specs', express.static(__dirname + '/../api/swagger/swagger.yaml'));
+  app.put('/docs/editor/specs', controllers.utils.storeApi);
 };

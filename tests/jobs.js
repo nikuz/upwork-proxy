@@ -3,7 +3,7 @@
 var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
-  config = require('../config.json'),
+  config = require('../config'),
   request = require('../api/request'),
   baseUrl = 'http://localhost:8020';
 
@@ -104,11 +104,11 @@ describe('Jobs', function() {
     });
     it('should return list of specific duration jobs', function(done) {
       var durations = [
-        {Month: 'Less than 1 month'},
-        {Week: 'Less than 1 week'},
-        {Quarter: '1 to 3 months'},
-        {Semester: '3 to 6 months'},
-        {Ongoing: 'More than 6 months'}
+        { Month: 'Less than 1 month' },
+        { Week: 'Less than 1 week' },
+        { Quarter: '1 to 3 months' },
+        { Semester: '3 to 6 months' },
+        { Ongoing: 'More than 6 months' }
       ];
       async.each(durations, function(duration, internalCallback) {
         var params = {
@@ -135,8 +135,8 @@ describe('Jobs', function() {
     });
     it('should return list of specific job type jobs', function(done) {
       var jobTypes = [
-        {Hourly: 'Hourly'},
-        {Fixed: 'Fixed'}
+        { Hourly: 'Hourly' },
+        { Fixed: 'Fixed' }
       ];
       async.each(jobTypes, function(type, internalCallback) {
         var params = {

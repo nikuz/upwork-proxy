@@ -1,6 +1,9 @@
 'use strict';
 
-var _ = require('underscore');
+var _ = require('underscore'),
+  env = require('dotenv');
+
+env.load();
 
 process.env.CURRENT_ENV = 'TEST';
 

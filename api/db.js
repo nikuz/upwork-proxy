@@ -2,9 +2,9 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  config = require('../../config.json'),
-  log = require('../modules/log'),
-  constants = require('./constants'),
+  config = require('../config'),
+  log = require('./modules/log'),
+  constants = require('./constants')(),
   redis = require('redis'),
   dbPrefix = config.db_prefix,
   db,
@@ -17,11 +17,11 @@ if (!db) {
 
   switch (process.env.CURRENT_ENV) {
     case 'PROD':
-      password = config.db_password;
+      password = process.env.REDIS_PASSWORD;
       break;
     case 'DEV':
       address = config.db_remote_host;
-      password = config.db_password;
+      password = process.env.REDIS_PASSWORD;
       break;
   }
   db = redis.createClient(port, address);
@@ -91,7 +91,7 @@ var getMembers = function(topic, members, options, callback) {
 };
 
 db.on('error', function(err) {
-  log.captureMessage(constants.get('DATABASE_ERROR'), {
+  log.captureMessage(constants.DATABASE_ERROR(), {
     extra: {
       err: err
     }
@@ -107,7 +107,7 @@ var pMulti = function(operations, callback) {
     multi = db.multi();
 
   if (!_.isArray(operations)) {
-    cb(constants.get('ARRAY_REQUIRED', 'operations'));
+    cb(constants.ARRAY_REQUIRED('operations'));
     return;
   }
 
@@ -124,6 +124,9 @@ var pMulti = function(operations, callback) {
         break;
       case 'zscore':
         multi[operation](topic, oItem.id);
+        break;
+      case 'del':
+        multi[operation](topic);
         break;
     }
   });

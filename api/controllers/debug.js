@@ -1,12 +1,12 @@
 'use strict';
 
-var debug = require('../modules/debug');
+var debug = require('../models/debug');
 
 // ----------------
 // public functions
 // ----------------
 
-var pStore = function(req, res) {
+function pStore(req, res) {
   var body = req.body || {};
   debug.store({
     userid: req.params.userid,
@@ -20,9 +20,9 @@ var pStore = function(req, res) {
     }
     res.send(result);
   });
-};
+}
 
-var pGet = function(req, res) {
+function pGet(req, res) {
   debug.get({
     userid: req.params.userid
   }, function(err, response) {
@@ -34,7 +34,7 @@ var pGet = function(req, res) {
     }
     res.send(result);
   });
-};
+}
 
 // ---------
 // interface
