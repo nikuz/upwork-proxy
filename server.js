@@ -21,7 +21,7 @@ if (!process.env.CURRENT_ENV) {
 
 console.log('Running %s server...', process.env.CURRENT_ENV);
 
-require('./api/routes')(app);
+require('./app/routes')(app);
 
 app.listen(app.PORT, function() {
   console.log('%s:%d - %s', app.SERVER, app.PORT, new Date(Date.now()));

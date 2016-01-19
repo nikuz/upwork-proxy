@@ -4,7 +4,7 @@ var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
   config = require('../config'),
-  request = require('../api/request'),
+  request = require('../app/request'),
   baseUrl = 'http://localhost:8020';
 
 describe('Jobs', function() {

@@ -7,8 +7,8 @@ var _ = require('underscore'),
   data = require('./fixtures/data/index'),
   addUser1 = data.addUser1,
   addUser2 = data.addUser2,
-  events = require('../api/modules/events'),
-  request = require('../api/request'),
+  events = require('../app/modules/events'),
+  request = require('../app/request'),
   baseUrl = 'http://localhost:8020';
 
 describe('Account', function() {

@@ -2,12 +2,12 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  db = require('./api/db'),
+  db = require('./app/db'),
   config = require('./config'),
-  upwork = require('./api/modules/upwork'),
-  account = require('./api/models/account'),
-  log = require('./api/modules/log'),
-  notificationsModule = require('./api/modules/notifications'),
+  upwork = require('./app/modules/upwork'),
+  account = require('./app/models/account'),
+  log = require('./app/modules/log'),
+  notificationsModule = require('./app/modules/notifications'),
   timeZones = require('./data/timezones'),
   interval = 6e4 * 5; // 5 minutes;
 

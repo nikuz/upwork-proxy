@@ -2,7 +2,7 @@
 
 var _ = require('underscore'),
   async = require('async'),
-  db = require('../api/db'),
+  db = require('../app/db'),
   ProgressBar = require('progress');
 
 var userFieldsMap = {

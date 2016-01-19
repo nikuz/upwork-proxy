@@ -1,6 +1,6 @@
 'use strict';
 
-var db = require('../../api/db');
+var db = require('../../app/db');
 
 exports = module.exports = {
   cleanup: function(callback) {

@@ -11,7 +11,7 @@ module.exports = function(grunt) {
       },
       src: [
         '*.js',
-        'api/**/*.js',
+        'app/**/*.js',
         'specs/**/*.js',
         'tests/**/*.js',
         'utils/**/*.js'
@@ -23,7 +23,7 @@ module.exports = function(grunt) {
       },
       all: [
         '*.js',
-        'api/**/*.js',
+        'app/**/*.js',
         'specs/**/*.js',
         'tests/**/*.js',
         'utils/**/*.js'

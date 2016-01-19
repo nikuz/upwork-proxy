@@ -3,7 +3,7 @@
 var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
-  jobs = require('../api/modules/jobs');
+  jobs = require('../app/modules/jobs');
 
 describe('Jobs', function() {
   describe('Get', function() {

@@ -8,8 +8,8 @@ var _ = require('underscore'),
   addUser1 = data.addUser1,
   addUser2 = data.addUser2,
   updateNotificationsIntervalUser1 = data.updateNotificationsIntervalUser1,
-  events = require('../api/modules/events'),
-  account = require('../api/models/account');
+  events = require('../app/modules/events'),
+  account = require('../app/models/account');
 
 describe('Account', function() {
   describe('Create', function() {
