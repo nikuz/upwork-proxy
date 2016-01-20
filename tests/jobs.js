@@ -72,7 +72,7 @@ describe('Jobs', function() {
         }
       ], function() {
         expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
-        done()
+        done();
       });
     });
   });
@@ -318,7 +318,7 @@ describe('Jobs', function() {
         }
       ], function() {
         expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
-        done()
+        done();
       });
     });
   });
@@ -369,7 +369,7 @@ describe('Jobs', function() {
         }
       ], function() {
         expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
-        done()
+        done();
       });
     });
   });
