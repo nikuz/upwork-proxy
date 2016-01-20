@@ -9,11 +9,10 @@ var _ = require('underscore'),
   log = require('./modules/log'),
   notificationsModule = require('./modules/notifications'),
   timeZones = require('../data/timezones'),
-  interval = 6e4 * 5; // 5 minutes;
+  interval = 6e4 * config.notification_interval; // 5 minutes
 
-var filterJobs = function(options, callback) {
+function filterJobs(options) {
   var opts = options || {},
-    cb = callback || _.noop,
     jobs = opts.jobs,
     limiter = opts.limiter,
     filteredJobs = [];
@@ -27,11 +26,11 @@ var filterJobs = function(options, callback) {
       filteredJobs.push(job);
     }
   });
-  cb(null, filteredJobs);
-};
+  return filteredJobs;
+}
 
 // calculate current minutes in all time zones
-var calculateMinutes = function(options, callback) {
+function calculateMinutes(options, callback) {
   var opts = options || {},
     cb = callback || _.noop,
     today = opts.minute ? new Date(opts.minute) : new Date(),
@@ -48,21 +47,16 @@ var calculateMinutes = function(options, callback) {
     } else if (zoneMinute === minutesPerDay) {
       zoneMinute = 0;
     }
-    minutes.push('time:' + zone + ':' + zoneMinute);
+    minutes.push(`time:${zone}:${zoneMinute}`);
   });
 
   cb(null, {
     curMinute: curUTCMinute,
     minutes: minutes
   });
-};
+}
 
-var reqFieldPrepare = function(field) {
-  field = field.toLowerCase().replace(' ', '_');
-  return field === 'all' ? '' : field;
-};
-
-var process = function(options) {
+function process(options) {
   var opts = options || {},
     startTime = Date.now(),
     minutes,
@@ -95,76 +89,73 @@ var process = function(options) {
       });
     },
     function(callback) {
-      // parse users, get new jobs, calculate notifications count
+      // check users activity, get new jobs, calculate notifications count
       console.log('Users to delivery: %d', users.length);
-      if (users.length) {
-        async.each(users, function(user, internalCallback) {
-          // if user doesn't use APP more than two days
-          if (Date.now() - new Date(user.updated).getTime() > 864e5 * 2) {
-            // remove user from notifications queue
-            account.disableNotifications({
-              userid: user.id
-            });
-            internalCallback();
-          } else {
-            var requestData = {
-              q: user.feeds,
-              budget: '[' + user.budgetFrom + ' TO ' + user.budgetTo + ']',
-              duration: reqFieldPrepare(user.duration),
-              job_type: reqFieldPrepare(user.jobType),
-              workload: reqFieldPrepare(user.workload),
-              paging: '0;50',
-              sort: 'create_time desc'
-            };
-            if (user.category2) {
-              requestData.category2 = user.category2;
-            }
-            upwork.request({
-              url: config.API_jobs_url,
-              data: requestData
-            }, function(err, response) {
-              if (err) {
-                internalCallback();
-              } else {
-                try {
-                  response = JSON.parse(response);
-                } catch (e) {
-                  console.log('Upwork response is not JSON: ' + response);
-                  return internalCallback();
-                }
-                filterJobs({
-                  jobs: response.jobs,
-                  limiter: user.last_job_date
-                }, function(err, response) {
-                  if (response.length) {
-                    notifications.push({
-                      userid: user.id,
-                      push_id: user.push_id,
-                      os: user.os,
-                      amount: response.length,
-                      firstJob: response[0]
-                    });
-                  }
-                });
-                internalCallback();
-              }
+      if (!users.length) {
+        return callback();
+      }
+
+      async.each(users, function(user, internalCallback) {
+        if (new Date() - new Date(user.last_logon) > 864e5 * 2) {
+          // if user doesn't use APP more than two days disable notifications for him
+          return account.disableNotifications({
+            userid: user.id
+          }, internalCallback);
+        }
+
+        var reqFieldPrepare = function(field) {
+            field = field.toLowerCase().replace(' ', '_');
+            return field === 'all' ? '' : field;
+          },
+          requestData = {
+            q: user.feeds,
+            budget: `[${user.budgetFrom} TO ${user.budgetTo}]`,
+            duration: reqFieldPrepare(user.duration),
+            job_type: reqFieldPrepare(user.jobType),
+            workload: reqFieldPrepare(user.workload),
+            paging: '0;50',
+            sort: 'create_time desc'
+          };
+
+        if (user.category2) {
+          requestData.category2 = user.category2;
+        }
+        upwork.request({
+          url: config.API_jobs_url,
+          data: requestData,
+          cacheIdData: requestData
+        }, function(err, response) {
+          if (err) {
+            return internalCallback();
+          }
+
+          response = filterJobs({
+            jobs: response.jobs,
+            limiter: user.last_job_date
+          });
+          if (response.length) {
+            notifications.push({
+              userid: user.id,
+              push_id: user.push_id,
+              os: user.os,
+              amount: response.length,
+              firstJob: response[0]
             });
           }
-        }, callback);
-      } else {
-        callback();
-      }
+          internalCallback();
+        });
+      }, callback);
     },
     function(callback) {
       // send notifications
       console.log('Notifications to delivery: %d', notifications.length);
-      if (notifications.length) {
-        notificationsModule.send({
-          notifications: notifications
-        }, callback);
-      } else {
-        callback();
+      if (!notifications.length) {
+        return callback();
       }
+
+      notificationsModule.send({
+        notifications: notifications
+      }, callback);
     }
   ], function(err) {
     var endTime = new Date().getTime(),
@@ -189,13 +180,13 @@ var process = function(options) {
       }
     }
   });
-};
+}
 
 // ----------------
 // public functions
 // ----------------
 
-var pStart = function(options, callback) {
+function pStart(options, callback) {
   var opts = options || {},
     cb = callback || _.noop,
     today = opts.minute ? new Date(opts.minute) : new Date(),
@@ -223,15 +214,15 @@ var pStart = function(options, callback) {
       setInterval(process, interval);
     }, timeToStartCron);
   }
-};
+}
 
-var pCalculateMinutes = function(options, callback) {
+function pCalculateMinutes(options, callback) {
   calculateMinutes(options, callback);
-};
+}
 
-var pFilterJobs = function(options, callback) {
+function pFilterJobs(options, callback) {
   filterJobs(options, callback);
-};
+}
 
 // ---------
 // interface

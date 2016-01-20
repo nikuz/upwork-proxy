@@ -122,8 +122,54 @@ function pGet(options, callback) {
   }
 }
 
+function pLogin(options, callback) {
+  var workflow = new EventEmitter(),
+    cb = callback || _.noop,
+    opts = options || {},
+    userid = opts.userid,
+    userinfo;
+
+  workflow.on('validateParams', function() {
+    validator.check({
+      userid: ['string', userid, function(internalCallback) {
+        pGet({
+          userid
+        }, function(err, response) {
+          if (err) {
+            internalCallback(err);
+          } else {
+            userinfo = response;
+            internalCallback();
+          }
+        });
+      }]
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('loginUpdate');
+      }
+    });
+  });
+
+  workflow.on('loginUpdate', function() {
+    userinfo.last_logon = new Date().toISOString();
+    db.hset('users', userid, userinfo, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          success: true
+        });
+      }
+    });
+  });
+
+  workflow.emit('validateParams');
+}
+
 function pUpdate(options, callback) {
-  var workflow = new(require('events').EventEmitter)(),
+  var workflow = new EventEmitter(),
     cb = callback || _.noop,
     opts = options ? _.clone(options) : {},
     userid = opts.userid,
@@ -419,6 +465,7 @@ function pStats(options, callback) {
 exports = module.exports = {
   create: pCreate,
   get: pGet,
+  login: pLogin,
   update: pUpdate,
   updateNotificationsInterval: pUpdateNotificationsInterval,
   disableNotifications: pDisableNotifications,

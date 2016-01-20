@@ -52,6 +52,20 @@ function pAccountGet(req, res) {
   });
 }
 
+function pLogin(req, res) {
+  account.login({
+    userid: req.params.userid
+  }, function(err, response) {
+    var result = {};
+    if (err) {
+      result.error = err;
+    } else {
+      result = response;
+    }
+    res.send(result);
+  });
+}
+
 function pAddUpworkToken(req, res) {
   var workflow = new EventEmitter(),
     body = req.body || {},
@@ -343,6 +357,7 @@ function pStats(req, res) {
 exports = module.exports = {
   create: pCreate,
   accountGet: pAccountGet,
+  login: pLogin,
   addUpworkToken: pAddUpworkToken,
   addFeeds: pAddFeeds,
   updateSettings: pUpdateSettings,

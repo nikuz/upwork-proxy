@@ -1,47 +1,57 @@
 'use strict';
 
-var async = require('async'),
+var path = require('path'),
+  async = require('async'),
   gcm = require('node-gcm'),
   apn = require('apn'),
   config = require('../../config'),
   log = require('../modules/log'),
-  senderGCM = new gcm.Sender(process.env.GCM_key),
-  senderAPN = new apn.Connection({
-    cert: '/var/www/upwork-proxy/keys/deploy-cert.pem',
-    key: '/var/www/upwork-proxy/keys/deploy-key.pem',
-    ca: '/var/www/upwork-proxy/keys/entrust_2048_ca.cer',
-    production: true
-  }),
-  constants = require('../constants')();
+  constants = require('../constants')(),
+  senderGCM, // Android notifications
+  senderAPN; // iOS notifications
 
-senderAPN.on('error', function(err) {
-  log.captureMessage(constants.dictionary.APN_ERROR, {
-    extra: {
-      err: err
-    }
+if (!senderGCM) {
+  senderGCM = new gcm.Sender(process.env.GCM_key);
+}
+if (!senderAPN) {
+  senderAPN = new apn.Connection({
+    cert: path.join(__dirname, '../../keys/deploy-cert.pem'),
+    key: path.join(__dirname, '../../keys/deploy-key.pem'),
+    ca: path.join(__dirname, '../../keys/entrust_2048_ca.cer'),
+    production: process.env.NODE_ENV === 'PROD'
   });
-});
-senderAPN.on('socketError', function(err) {
-  log.captureMessage(constants.dictionary.APN_SOCKET_ERROR, {
-    extra: {
-      err: err
-    }
+  senderAPN.on('error', function(err) {
+    log.captureMessage(constants.dictionary.APN_ERROR, {
+      extra: {
+        err: err
+      }
+    });
   });
-});
+  senderAPN.on('socketError', function(err) {
+    log.captureMessage(constants.dictionary.APN_SOCKET_ERROR, {
+      extra: {
+        err: err
+      }
+    });
+  });
+}
 
 // ----------------
 // public functions
 // ----------------
 
-var pSend = function(options, callback) {
+function pSend(options, callback) {
   var cb = callback || function() {},
     opts = options || {},
     notifications = opts.notifications || [];
 
   async.each(notifications, function(item, internalCallback) {
+    if (!item.push_id.length || !item.os) {
+      return internalCallback();
+    }
     var messageText = item.firstJob.title.substring(0, 100);
-    if (item.os === 'android' && item.push_id.length > 0) {
-      var message = new gcm.Message();
+    if (item.os === 'android') {
+      let message = new gcm.Message();
       message.addData({
         title: config.serviceName,
         message: messageText,
@@ -57,8 +67,8 @@ var pSend = function(options, callback) {
         }
       });
       internalCallback();
-    } else if (item.os === 'ios' && item.push_id.length > 0) {
-      var myDevice = new apn.Device(item.push_id),
+    } else if (item.os === 'ios') {
+      let myDevice = new apn.Device(item.push_id),
         note = new apn.Notification();
 
       note.alert = messageText;
@@ -70,11 +80,9 @@ var pSend = function(options, callback) {
 
       senderAPN.pushNotification(note, myDevice);
       internalCallback();
-    } else {
-      internalCallback();
     }
   }, cb);
-};
+}
 
 
 // ---------
@@ -84,4 +92,3 @@ var pSend = function(options, callback) {
 exports = module.exports = {
   send: pSend
 };
-

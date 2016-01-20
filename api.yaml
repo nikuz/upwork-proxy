@@ -367,6 +367,8 @@ definitions:
           type: string
         updated:
           type: string
+        last_logon:
+          type: string
   AccountItemResponseStats:
     allOf:
     - $ref: '#/definitions/AccountItemResponse'

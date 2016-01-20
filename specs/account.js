@@ -98,6 +98,57 @@ describe('Account', function() {
     });
   });
 
+  describe('Login', function() {
+    var user1id;
+    before(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    beforeEach(function(done) {
+      events.replay([addUser1], function(err, response) {
+        user1id = response[0].userid;
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    it('should allow to login by specific user', function(done) {
+      async.series([
+        function(callback) {
+          account.login({
+            userid: user1id
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            expect(response).to.be.an('object');
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          account.get({
+            userid: user1id
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            expect(response).to.be.an('object');
+            expect(response.last_logon).to.not.be.an('undefined');
+            callback();
+          });
+        }
+      ], done);
+    });
+    it('should return error if user is not exists', function(done) {
+      account.login({
+        userid: 'not_exists_user'
+      }, function(err) {
+        expect(!!err).to.eql(true);
+        done();
+      });
+    });
+  });
+
   describe('Update', function() {
     var user1id;
     before(function(done) {

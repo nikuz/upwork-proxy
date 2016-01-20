@@ -103,6 +103,55 @@ describe('Account', function() {
     });
   });
 
+  describe('Login', function() {
+    var user1id;
+    before(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    beforeEach(function(done) {
+      events.replay([addUser1], function(err, response) {
+        user1id = response[0] && response[0].userid;
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    it('should allow to login by specific user', function(done) {
+      async.series([
+        function(callback) {
+          request.put(`${baseUrl}/accounts/${user1id}/login`, null, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          request.get(`${baseUrl}/accounts/${user1id}`, null, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.last_logon).to.not.be.an('undefined');
+            callback();
+          });
+        }
+      ], done);
+    });
+    it('should return error if user is not exists', function(done) {
+      request.put(`${baseUrl}/accounts/not_exists_user/login`, null, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(true);
+        done();
+      });
+    });
+  });
+
   describe('Stats', function() {
     var user1id;
     before(function(done) {

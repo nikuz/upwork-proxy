@@ -16,6 +16,7 @@ exports = module.exports = function(app) {
 
   // account
   app.post('/accounts', controllers.account.create);
+  app.put('/accounts/:userid/login', controllers.account.login);
   app.put('/accounts/:userid/token', controllers.account.addUpworkToken);
   app.put('/accounts/:userid/feeds', controllers.account.addFeeds);
   app.put('/accounts/:userid/settings', controllers.account.updateSettings);
