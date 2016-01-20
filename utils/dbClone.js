@@ -11,7 +11,7 @@ exports = module.exports = function(options, callback) {
     cb = callback,
     keys, client, localClient,
     dbPrefix = config.db_prefix,
-    currentEnv = process.env.CURRENT_ENV,
+    currentEnv = process.env.NODE_ENV,
     spentTime = new Date();
 
   workflow.on('validateParams', function() {

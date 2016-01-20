@@ -44,20 +44,11 @@ function pGet(req, res) {
     upwork.request({
       url: config.API_job_url.replace('{id}', jobid),
       token,
-      token_secret
-    }, function(err, response) {
-      if (err) {
-        cb(err);
-      } else {
-        try {
-          JSON.parse(response);
-        } catch (e) {
-          log.captureMessage('Upwork is down');
-          response = 'upwork_is_down';
-        }
-        cb(null, response);
+      token_secret,
+      cacheIdData: {
+        jobid
       }
-    });
+    }, cb);
   });
 
   workflow.emit('validateParams');
@@ -118,28 +109,22 @@ function pList(req, res) {
       url: config.API_jobs_url,
       token,
       token_secret,
-      data
-    }, function(err, response) {
-      if (err) {
-        cb(err);
-      } else {
-        try {
-          JSON.parse(response);
-        } catch (e) {
-          log.captureMessage('Upwork is down');
-          response = 'upwork_is_down';
-        }
-        cb(null, response);
-      }
-    });
+      data,
+      cacheIdData: data
+    }, cb);
   });
 
   workflow.emit('validateParams');
 }
 
 function pCategoriesList(req, res) {
+  var url = config.API_jobs_categories_url;
   upwork.request({
-    url: config.API_jobs_categories_url
+    url: url,
+    cacheIdData: {
+      url
+    },
+    cacheTTL: 1000 * 60 * 60 * 24 // one day
   }, function(err, response) {
     var result = {};
     if (err) {

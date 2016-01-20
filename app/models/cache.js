@@ -1,15 +1,16 @@
 'use strict';
 
 var _ = require('underscore'),
+  config = require('../../config'),
   db = require('../db'),
   crypto = require('crypto'),
   constants = require('../constants')(),
   validator = require('../modules/validator'),
   EventEmitter = require('events').EventEmitter,
-  cacheTTL = 1000 * 60 * 5; // 5 minutes;
+  defaultCacheTTL = config.cacheTTL;
 
-if (process.env.CURRENT_ENV === 'TEST') {
-  cacheTTL = 3; // 3 seconds
+if (process.env.NODE_ENV === 'TEST') {
+  defaultCacheTTL = 3; // 3 seconds
 }
 
 // ----------------
@@ -31,12 +32,14 @@ function pStore(options, callback) {
     cb = callback || _.noop,
     opts = options || {},
     id = opts.id,
-    data = opts.data;
+    data = opts.data,
+    ttl = opts.ttl || defaultCacheTTL;
 
   workflow.on('validateParams', function() {
     validator.check({
       id: ['string', id],
-      data: ['string', data]
+      data: ['string', data],
+      ttl: ['number', ttl]
     }, function(err) {
       if (err) {
         cb(err);
@@ -47,7 +50,7 @@ function pStore(options, callback) {
   });
 
   workflow.on('store', function() {
-    db.set(`cache:${id}`, cacheTTL, data, function(err) {
+    db.set(`cache:${id}`, ttl, data, function(err) {
       if (err) {
         cb(err);
       } else {

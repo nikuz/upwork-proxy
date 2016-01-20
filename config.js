@@ -3,7 +3,6 @@
 exports = module.exports = {
   serviceName: 'Upwatcher',
   db_prefix: 'upwatcher:',
-  db_remote_host: '78.47.43.252',
 
   API_url: 'https://www.upwork.com',
   API_token_url: '/api/auth/v1/oauth/token/request',
@@ -13,5 +12,7 @@ exports = module.exports = {
   API_jobs_categories_url: '/api/profiles/v2/metadata/categories.json',
   API_job_url: '/api/profiles/v1/jobs/{id}.json',
 
-  notification_interval: 5
+  notification_interval: 5,
+
+  cacheTTL: 1000 * 60 * 5 // 5 minutes
 };

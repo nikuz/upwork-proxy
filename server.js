@@ -10,16 +10,16 @@ app.SERVER = process.env.SERVER_NAME;
 app.PORT = process.env.PORT;
 
 process.argv.forEach(function(val) {
-  if (val === 'dev') {
-    process.env.CURRENT_ENV = 'DEV';
+  if (val === 'prod') {
+    process.env.NODE_ENV = 'PROD';
   }
 });
 
-if (!process.env.CURRENT_ENV) {
-  process.env.CURRENT_ENV = 'TEST';
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'DEV';
 }
 
-console.log('Running %s server...', process.env.CURRENT_ENV);
+console.log('Running %s server...', process.env.NODE_ENV);
 
 require('./app/routes')(app);
 

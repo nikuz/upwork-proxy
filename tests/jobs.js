@@ -3,6 +3,7 @@
 var _ = require('underscore'),
   async = require('async'),
   expect = require('chai').expect,
+  fixtures = require('./fixtures/fixtures'),
   config = require('../config'),
   request = require('../app/request'),
   token = process.env.API_token,
@@ -16,6 +17,10 @@ var _ = require('underscore'),
 
 describe('Jobs', function() {
   describe('Get', function() {
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
     it('should return info of specific job by id', function(done) {
       var jobUrl = config.API_job_url,
         jobId = '~010e6fbc3fb9ec7573',
@@ -31,9 +36,52 @@ describe('Jobs', function() {
         done();
       });
     });
+    it('should use cache for second request', function(done) {
+      var jobUrl = config.API_job_url,
+        jobId = '~010e6fbc3fb9ec7573',
+        url = jobUrl.replace('{id}', jobId),
+        firstRequestResponseTime,
+        secondRequestResponseTime;
+
+      async.series([
+        function(callback) {
+          firstRequestResponseTime = new Date();
+          request.get(baseUrl + url, tokenParams, function(err, response) {
+            firstRequestResponseTime = new Date() - firstRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.auth_user).to.be.an('object');
+            expect(response.profile).to.be.an('object');
+            expect(response.profile.ciphertext).to.eql(jobId);
+            callback();
+          });
+        },
+        function(callback) {
+          secondRequestResponseTime = new Date();
+          request.get(baseUrl + url, tokenParams, function(err, response) {
+            secondRequestResponseTime = new Date() - secondRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.auth_user).to.be.an('object');
+            expect(response.profile).to.be.an('object');
+            expect(response.profile.ciphertext).to.eql(jobId);
+            callback();
+          });
+        }
+      ], function() {
+        expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
+        done()
+      });
+    });
   });
 
   describe('List', function() {
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
     it('should return list of jobs', function(done) {
       var params = {
         q: 'java',
@@ -231,9 +279,55 @@ describe('Jobs', function() {
         done();
       });
     });
+    it('should use cache for second request', function(done) {
+      var firstRequestResponseTime,
+        secondRequestResponseTime;
+
+      async.series([
+        function(callback) {
+          firstRequestResponseTime = new Date();
+          var params = {
+            q: 'java',
+            paging: '0;20'
+          };
+          request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
+            firstRequestResponseTime = new Date() - firstRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.jobs).to.be.an('array');
+            expect(response.jobs.length).to.eql(20);
+            callback();
+          });
+        },
+        function(callback) {
+          secondRequestResponseTime = new Date();
+          var params = {
+            q: 'java',
+            paging: '0;20'
+          };
+          request.get(baseUrl + config.API_jobs_url, _.extend(params, tokenParams), function(err, response) {
+            secondRequestResponseTime = new Date() - secondRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.jobs).to.be.an('array');
+            expect(response.jobs.length).to.eql(20);
+            callback();
+          });
+        }
+      ], function() {
+        expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
+        done()
+      });
+    });
   });
 
   describe('Get categories', function() {
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
     it('should return list of available categories', function(done) {
       request.get(baseUrl + config.API_jobs_categories_url, tokenParams, function(err, response) {
         expect(err).to.eql(null);
@@ -242,6 +336,40 @@ describe('Jobs', function() {
         expect(response.categories).to.be.an('array');
         expect(response.categories).to.have.length.above(0);
         done();
+      });
+    });
+    it('should use cache for second request', function(done) {
+      var firstRequestResponseTime,
+        secondRequestResponseTime;
+
+      async.series([
+        function(callback) {
+          firstRequestResponseTime = new Date();
+          request.get(baseUrl + config.API_jobs_categories_url, tokenParams, function(err, response) {
+            firstRequestResponseTime = new Date() - firstRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.categories).to.be.an('array');
+            expect(response.categories).to.have.length.above(0);
+            callback();
+          });
+        },
+        function(callback) {
+          secondRequestResponseTime = new Date();
+          request.get(baseUrl + config.API_jobs_categories_url, tokenParams, function(err, response) {
+            secondRequestResponseTime = new Date() - secondRequestResponseTime;
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.categories).to.be.an('array');
+            expect(response.categories).to.have.length.above(0);
+            callback();
+          });
+        }
+      ], function() {
+        expect(firstRequestResponseTime).to.be.above(secondRequestResponseTime);
+        done()
       });
     });
   });

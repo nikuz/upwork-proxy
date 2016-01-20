@@ -15,14 +15,9 @@ if (!db) {
     port = 6379,
     password = '';
 
-  switch (process.env.CURRENT_ENV) {
-    case 'PROD':
-      password = process.env.REDIS_PASSWORD;
-      break;
-    case 'DEV':
-      address = config.db_remote_host;
-      password = process.env.REDIS_PASSWORD;
-      break;
+  if (process.env.NODE_ENV === 'PROD') {
+    address = process.env.REDIS_HOST;
+    password = process.env.REDIS_PASSWORD;
   }
   db = redis.createClient(port, address);
   db.auth(password);
@@ -232,8 +227,8 @@ function pCounter(key, callback) {
 
 function pFlushall(callback) {
   var cb = callback || _.noop;
-  if (process.env.CURRENT_ENV !== 'TEST') {
-    console.log('Can\'t flush `%` db. Flush operation available only for `TEST` environment.', process.env.CURRENT_ENV);
+  if (process.env.NODE_ENV !== 'TEST') {
+    console.log('Can\'t flush `%` db. Flush operation available only for `TEST` environment.', process.env.NODE_ENV);
     cb(true);
   } else {
     db.keys(dbPrefix + '*', function(err, keys) {

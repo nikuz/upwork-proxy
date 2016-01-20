@@ -10,7 +10,7 @@ exports = module.exports = function(options, callback) {
     cb = callback,
     keys = [], metaKeys = [],
     client,
-    currentEnv = process.env.CURRENT_ENV,
+    currentEnv = process.env.NODE_ENV,
     dbPrefix = config.db_prefix,
     spentTime = new Date();
 
@@ -18,12 +18,12 @@ exports = module.exports = function(options, callback) {
     var host = '127.0.0.1',
       password = '';
 
-    if (currentEnv === 'DEV') {
-      if (!config.db_remote_host || !config.db_password) {
-        return cb('You should specify `db_remote_host` and `db_password` in config');
+    if (currentEnv === 'PROD') {
+      if (!process.env.REDIS_HOST || !process.env.REDIS_PASSWORD) {
+        return cb('You should specify `REDIS_HOST` and `REDIS_PASSWORD` in your environment');
       }
-      host = config.db_remote_host;
-      password = config.db_password;
+      host = process.env.REDIS_HOST;
+      password = process.env.REDIS_PASSWORD;
     }
 
     client = redis.createClient(6379, host);

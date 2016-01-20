@@ -13,7 +13,7 @@ if (!client) {
 // ----------------
 
 var pCaptureMessage = function(name, opts) {
-  if (process.env.CURRENT_ENV === 'TEST') {
+  if (process.env.NODE_ENV === 'PROD') {
     client.captureMessage(name, opts);
   }
 };

@@ -1,7 +1,10 @@
 'use strict';
 
 var _ = require('underscore'),
-  qs = require('querystring');
+  qs = require('querystring'),
+  env = require('dotenv');
+
+env.load();
 
 var utils = [
   './account_convert_fields',
@@ -13,9 +16,9 @@ var utils = [
 exports = module.exports = function(grunt, done, env, target, args) {
   env = env && env.toUpperCase();
   if (!env) {
-    env = 'TEST';
+    env = 'DEV';
   }
-  process.env.CURRENT_ENV = env;
+  process.env.NODE_ENV = env;
 
   target = './' + target;
   if (target && _.contains(utils, target)) {

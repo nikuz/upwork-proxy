@@ -13,8 +13,8 @@ var pStoreApi = function(req, res) {
     result = {},
     err;
 
-  if (process.env.CURRENT_ENV !== 'TEST') {
-    err = 'Can work only in `TEST` evn';
+  if (process.env.NODE_ENV !== 'DEV') {
+    err = 'Can work only in `DEV` evn';
   }
   if (!apiText.length) {
     err = 'Empty data';

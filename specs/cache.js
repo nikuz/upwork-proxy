@@ -5,6 +5,7 @@ var expect = require('chai').expect,
   fixtures = require('./fixtures/fixtures'),
   data = require('./fixtures/data/index'),
   addCache = data.addCache,
+  addCache6Seconds = data.addCache6Seconds,
   events = require('../app/modules/events'),
   cache = require('../app/models/cache');
 
@@ -111,14 +112,14 @@ describe('Cache', function() {
     });
 
     beforeEach(function(done) {
-      events.replay([addCache], done);
+      events.replay([addCache, addCache6Seconds], done);
     });
 
     afterEach(function(done) {
       fixtures.cleanup(done);
     });
 
-    it('cache should be removed after 3 seconds', function(done) { // actually after 5 minutes for production
+    it('cache should be removed after 3 seconds', function(done) { // after 5 minutes for production
       async.series([
         function(callback) {
           cache.get({
@@ -130,12 +131,52 @@ describe('Cache', function() {
             callback();
           });
         },
-        function(callback) {
+        function(callback) { // wait 4 seconds
           setTimeout(callback, 1000 * 4);
         },
         function(callback) {
           cache.get({
             id: addCache.params.id
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            expect(response).to.eql(null);
+            callback();
+          });
+        }
+      ], done);
+    });
+
+    it('cache shouldn\'t be removed sooner than after 6 seconds', function(done) {
+      async.series([
+        function(callback) {
+          cache.get({
+            id: addCache6Seconds.params.id
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            expect(response).to.be.a('string');
+            expect(response).to.eql(addCache6Seconds.params.data);
+            callback();
+          });
+        },
+        function(callback) { // wait 4 seconds
+          setTimeout(callback, 1000 * 4);
+        },
+        function(callback) { // cache still should be available
+          cache.get({
+            id: addCache6Seconds.params.id
+          }, function(err, response) {
+            expect(!!err).to.eql(false);
+            expect(response).to.be.a('string');
+            expect(response).to.eql(addCache6Seconds.params.data);
+            callback();
+          });
+        },
+        function(callback) { // wait more 3 seconds
+          setTimeout(callback, 1000 * 3);
+        },
+        function(callback) {
+          cache.get({
+            id: addCache6Seconds.params.id
           }, function(err, response) {
             expect(!!err).to.eql(false);
             expect(response).to.eql(null);

@@ -39,6 +39,9 @@ module.exports = function(grunt) {
     },
     // for e2e tests
     express: {
+      options: {
+        node_env: 'TEST'
+      },
       local: {
         options: {
           script: 'server.js',

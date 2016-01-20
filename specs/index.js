@@ -5,6 +5,8 @@ var _ = require('underscore'),
 
 env.load();
 
+process.env.NODE_ENV = 'TEST';
+
 var specs = [
   './account',
   './notifier',

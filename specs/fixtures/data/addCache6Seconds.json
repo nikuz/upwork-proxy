@@ -1,0 +1,8 @@
+{
+  "modelOperation": "cache.store",
+  "params": {
+    "id": "long_term_cache",
+    "data": "data of long term cache",
+    "ttl": 6
+  }
+}
