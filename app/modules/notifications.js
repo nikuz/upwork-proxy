@@ -21,18 +21,10 @@ if (!senderAPN) {
     production: process.env.NODE_ENV === 'PROD'
   });
   senderAPN.on('error', function(err) {
-    log.captureMessage(constants.dictionary.APN_ERROR, {
-      extra: {
-        err: err
-      }
-    });
+    log.captureError(err);
   });
   senderAPN.on('socketError', function(err) {
-    log.captureMessage(constants.dictionary.APN_SOCKET_ERROR, {
-      extra: {
-        err: err
-      }
-    });
+    log.captureError(err);
   });
 }
 
@@ -59,11 +51,7 @@ function pSend(options, callback) {
       });
       senderGCM.sendNoRetry(message, [item.push_id], function(err) {
         if (err) {
-          log.captureMessage('GCM error', {
-            extra: {
-              err: err
-            }
-          });
+          log.captureError(err);
         }
       });
       internalCallback();

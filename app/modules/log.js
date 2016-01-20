@@ -1,27 +1,44 @@
 'use strict';
 
-var raven = require('raven'),
+var winston = require('winston'),
   config = require('../../config'),
-  client;
+  ready;
 
-if (!client) {
-  client = new raven.Client(config.SENTRY_URL);
+require('winston-loggly');
+
+if (!ready) {
+  ready = true;
+  winston.add(winston.transports.Loggly, {
+    token: process.env.LOGGLY_token,
+    subdomain: process.env.LOGGLY_subdomain,
+    tags: ['upwatcher-proxy'],
+    json: true
+  });
 }
 
 // ----------------
 // public functions
 // ----------------
 
-var pCaptureMessage = function(name, opts) {
+function pCaptureMessage(message) {
   if (process.env.NODE_ENV === 'PROD') {
-    client.captureMessage(name, opts);
+    console.log(message);
+    winston.log(message);
   }
-};
+}
+
+function pCaptureError(message) {
+  if (process.env.NODE_ENV === 'PROD') {
+    console.error(message);
+    winston.error(message);
+  }
+}
 
 // ---------
 // interface
 // ---------
 
 exports = module.exports = {
-  captureMessage: pCaptureMessage
+  captureMessage: pCaptureMessage,
+  captureError: pCaptureError
 };

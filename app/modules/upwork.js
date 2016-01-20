@@ -107,11 +107,7 @@ function pRequest(options, callback) {
         }
       });
     }).on('error', function(e) {
-      log.captureMessage(constants.dictionaty.UPWORK_REQUEST_ERROR, {
-        extra: {
-          err: e.message
-        }
-      });
+      log.captureError(e.message);
       cb(e.message);
     });
   });

@@ -163,20 +163,12 @@ function process(options) {
 
     if (err) {
       console.log(err);
-      log.captureMessage('Upwork proxy cron job error', {
-        extra: {
-          err: err
-        }
-      });
+      log.captureError(err);
     } else {
       console.log('Spent time: ' + spentTime);
       console.log('Done!');
       if (spentTime > 60) {
-        log.captureMessage('Upwork proxy cron job time', {
-          extra: {
-            time: 'Spent time: ' + spentTime
-          }
-        });
+        log.captureMessage('Spent time: ' + spentTime);
       }
     }
   });
