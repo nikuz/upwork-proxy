@@ -119,7 +119,7 @@ function pRequest(options, callback) {
       ttl: cacheTTL
     }, function(err) {
       if (err) {
-        console.error(err);
+        log.captureError(err);
       }
     });
   });

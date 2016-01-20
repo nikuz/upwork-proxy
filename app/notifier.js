@@ -63,7 +63,7 @@ function process(options) {
     users,
     notifications = [];
 
-  console.log('Start job at ' + new Date());
+  log.captureMessage('Start job at ' + new Date());
   async.series([
     function(callback) {
       //new Date(Date.now() + opts.timeToStartCron).getUTCMinutes()
@@ -71,7 +71,7 @@ function process(options) {
         if (err) {
           callback(err);
         } else {
-          console.log('Cur UTC minute: ' + response.curMinute);
+          log.captureMessage('Cur UTC minute: ' + response.curMinute);
           minutes = response.minutes;
           callback();
         }
@@ -90,7 +90,7 @@ function process(options) {
     },
     function(callback) {
       // check users activity, get new jobs, calculate notifications count
-      console.log('Users to delivery: %d', users.length);
+      log.captureMessage('Users to delivery: %d', users.length);
       if (!users.length) {
         return callback();
       }
@@ -148,7 +148,7 @@ function process(options) {
     },
     function(callback) {
       // send notifications
-      console.log('Notifications to delivery: %d', notifications.length);
+      log.captureMessage('Notifications to delivery: %d', notifications.length);
       if (!notifications.length) {
         return callback();
       }
@@ -158,18 +158,13 @@ function process(options) {
       }, callback);
     }
   ], function(err) {
-    var endTime = new Date().getTime(),
-      spentTime = (endTime - startTime) / 1000;
-
     if (err) {
-      console.log(err);
       log.captureError(err);
     } else {
-      console.log('Spent time: ' + spentTime);
-      console.log('Done!');
-      if (spentTime > 60) {
-        log.captureMessage('Spent time: ' + spentTime);
-      }
+      let endTime = new Date().getTime(),
+        spentTime = (endTime - startTime) / 1000;
+
+      log.captureMessage('Done. Spent time: ' + spentTime);
     }
   });
 }
@@ -201,7 +196,7 @@ function pStart(options, callback) {
   } else {
     console.log('Seconds to first notification: %d', timeToStartCron / 1000);
     setTimeout(function() {
-      console.log('Start cron job in %s', new Date());
+      log.captureMessage('Start cron job in %s', new Date());
       process();
       setInterval(process, interval);
     }, timeToStartCron);

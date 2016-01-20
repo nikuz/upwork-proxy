@@ -23,7 +23,7 @@ if (!db) {
   db.auth(password);
 
   db.on('error', function(err) {
-    console.log('Redis ' + err);
+    log.captureError('Redis ' + err);
     if (!dbConnected) {
       process.exit(1);
     }
