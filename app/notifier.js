@@ -220,8 +220,8 @@ function pCalculateMinutes(options, callback) {
   calculateMinutes(options, callback);
 }
 
-function pFilterJobs(options, callback) {
-  filterJobs(options, callback);
+function pFilterJobs(options) {
+  return filterJobs(options);
 }
 
 // ---------

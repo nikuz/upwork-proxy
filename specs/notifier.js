@@ -88,15 +88,18 @@ describe('Notifier', function() {
   describe('Filter', function() {
     it('should return jobs not older than 1 hour', function(done) {
       var hourAgo = new Date(Date.now() - 36e5),
-        receivedJobs;
+        receivedJobs,
+        requestData = {
+          q: 'javascript',
+          paging: '0;50'
+        };
+
       async.series([
         function(callback) {
           upwork.request({
             url: config.API_jobs_url,
-            data: {
-              q: 'javascript',
-              paging: '0;50'
-            }
+            data: requestData,
+            cacheIdData: requestData
           }, function(err, response) {
             expect(!!err).to.eql(false);
             response = JSON.parse(response);
@@ -107,24 +110,23 @@ describe('Notifier', function() {
           });
         },
         function(callback) {
-          notifier.filterJobs({
-            jobs: receivedJobs,
-            limiter: hourAgo
-          }, function(err, response) {
-            var filteredJobs = [];
-            expect(!!err).to.eql(false);
-            expect(response).to.be.an('array');
-            _.each(response, function(item) {
-              var created = new Date(item.date_created);
-              expect(created).to.be.above(hourAgo);
-              if (created > hourAgo) {
-                filteredJobs.push(item);
-              }
-            });
-            expect(filteredJobs).to.have.length.above(0);
-            expect(filteredJobs).to.have.length.below(50);
-            callback();
+          var response = notifier.filterJobs({
+              jobs: receivedJobs,
+              limiter: hourAgo
+            }),
+            filteredJobs = [];
+
+          expect(response).to.be.an('array');
+          _.each(response, function(item) {
+            var created = new Date(item.date_created);
+            expect(created).to.be.above(hourAgo);
+            if (created > hourAgo) {
+              filteredJobs.push(item);
+            }
           });
+          expect(filteredJobs).to.have.length.above(0);
+          expect(filteredJobs).to.have.length.below(50);
+          callback();
         }
       ], function() {
         done();
