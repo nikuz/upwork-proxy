@@ -90,7 +90,7 @@ function process(options) {
     },
     function(callback) {
       // check users activity, get new jobs, calculate notifications count
-      log.captureMessage('Users to delivery: %d', users.length);
+      log.captureMessage(`Users to delivery: ${users.length}`);
       if (!users.length) {
         return callback();
       }
@@ -148,7 +148,7 @@ function process(options) {
     },
     function(callback) {
       // send notifications
-      log.captureMessage('Notifications to delivery: %d', notifications.length);
+      log.captureMessage(`Notifications to delivery: ${notifications.length}`);
       if (!notifications.length) {
         return callback();
       }
@@ -196,7 +196,7 @@ function pStart(options, callback) {
   } else {
     console.log('Seconds to first notification: %d', timeToStartCron / 1000);
     setTimeout(function() {
-      log.captureMessage('Start cron job in %s', new Date());
+      log.captureMessage(`Start cron job in ${new Date()}`);
       process();
       setInterval(process, interval);
     }, timeToStartCron);

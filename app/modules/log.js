@@ -21,15 +21,15 @@ if (!ready) {
 // ----------------
 
 function pCaptureMessage(message) {
+  console.log(message);
   if (process.env.NODE_ENV === 'PROD') {
-    console.log(message);
     winston.log(message);
   }
 }
 
 function pCaptureError(message) {
+  console.error(message);
   if (process.env.NODE_ENV === 'PROD') {
-    console.error(message);
     winston.error(message);
   }
 }
