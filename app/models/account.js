@@ -69,6 +69,7 @@ function pCreate(options, callback) {
   });
 
   workflow.on('create', function() {
+    var timestamp = new Date().toISOString();
     var userInfo = {
       id: userid,
       push_id: opts.id,
@@ -85,8 +86,8 @@ function pCreate(options, callback) {
       dndTo: opts.dndTo,
       useProxy: opts.useProxy,
       timezone: opts.timezone,
-      notifications: false, // it's not notifyAllow
-      created: new Date().toISOString()
+      created: timestamp,
+      last_logon: timestamp
     };
     db.hset('users', userid, userInfo, function(err) {
       if (err) {
@@ -253,7 +254,7 @@ function pUpdateNotificationsInterval(options, callback) {
     cb = callback || _.noop,
     userid = opts.userid,
     timezone = opts.timezone,
-    prevTimezone = opts.prevTimezone && opts.prevTimezone;
+    prevTimezone = opts.prevTimezone;
 
   workflow.on('validateParams', function() {
     validator.check({

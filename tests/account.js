@@ -123,7 +123,10 @@ describe('Account', function() {
     it('should allow to login by specific user', function(done) {
       async.series([
         function(callback) {
-          request.put(`${baseUrl}/accounts/${user1id}/login`, null, function(err, response) {
+          var data = {
+            timezone: addUser1.params.timezone
+          };
+          request.put(`${baseUrl}/accounts/${user1id}/login`, data, function(err, response) {
             expect(err).to.eql(null);
             expect(response).to.be.an('object');
             expect(!!response.error).to.eql(false);
@@ -141,6 +144,56 @@ describe('Account', function() {
           });
         }
       ], done);
+    });
+    it('should update users notification interval if timezone was changed', function(done) {
+      var newTimeZone = 240;
+      async.series([
+        function(callback) {
+          // add feeds
+          var data = _.extend(_.clone(addUser1.params), {
+            feeds: 'java'
+          });
+          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          var data = {
+            timezone: newTimeZone
+          };
+          request.put(`${baseUrl}/accounts/${user1id}/login`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.success).to.eql(true);
+            callback();
+          });
+        },
+        function(callback) {
+          request.get(`${baseUrl}/accounts/${user1id}/stats`, null, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.id).to.eql(user1id);
+            var minutes = response.notificationsMinutes;
+            expect(minutes).to.be.an('array');
+            expect(minutes).to.have.length.above(0);
+            _.each(minutes, function(item) {
+              item = item.split(':');
+              item[1] = Number(item[1]);
+              expect(item[0]).to.eql(String(newTimeZone));
+              expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
+            });
+            callback();
+          });
+        }
+      ], function() {
+        done();
+      });
     });
     it('should return error if user is not exists', function(done) {
       request.put(`${baseUrl}/accounts/not_exists_user/login`, null, function(err, response) {
@@ -417,58 +470,6 @@ describe('Account', function() {
               expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
               expect(item[1]).to.be.least(420);
               expect(item[1]).to.be.most(1380);
-            });
-            callback();
-          });
-        }
-      ], function() {
-        done();
-      });
-    });
-    it('should update users notification time zone', function(done) {
-      var newTimeZone = 240;
-      async.series([
-        function(callback) {
-          // add feeds
-          var data = _.extend(_.clone(addUser1.params), {
-            feeds: 'java'
-          });
-          request.put(`${baseUrl}/accounts/${user1id}/feeds`, data, function(err, response) {
-            expect(err).to.eql(null);
-            expect(response).to.be.an('object');
-            expect(!!response.error).to.eql(false);
-            expect(response.success).to.eql(true);
-            callback();
-          });
-        },
-        function(callback) {
-          var data = _.extend(_.clone(addUser1.params), {
-            timezone: newTimeZone
-          });
-          request.put(`${baseUrl}/accounts/${user1id}/settings`, data, function(err, response) {
-            expect(err).to.eql(null);
-            expect(response).to.be.an('object');
-            expect(!!response.error).to.eql(false);
-            expect(response.success).to.eql(true);
-            callback();
-          });
-        },
-        function(callback) {
-          request.get(`${baseUrl}/accounts/${user1id}/stats`, null, function(err, response) {
-            expect(err).to.eql(null);
-            expect(response).to.be.an('object');
-            expect(!!response.error).to.eql(false);
-            expect(response.id).to.eql(user1id);
-            var minutes = response.notificationsMinutes;
-            expect(minutes).to.be.an('array');
-            expect(minutes).to.have.length.above(0);
-            _.each(minutes, function(item) {
-              item = item.split(':');
-              item[1] = Number(item[1]);
-              expect(item[0]).to.eql(String(newTimeZone));
-              expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
-              expect(item[1]).to.be.least(360);
-              expect(item[1]).to.be.below(1440);
             });
             callback();
           });
