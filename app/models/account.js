@@ -191,13 +191,17 @@ function pUpdate(options, callback) {
       dndFrom: 'string',
       dndTo: 'string',
       useProxy: 'boolean',
-      timezone: 'number'
+      timezone: 'number',
+      last_job_date: 'string'
     };
 
   workflow.on('validateParams', function() {
     var validateFields = {};
     _.each(allowedFields, function(type, name) {
       if (!_.isUndefined(opts[name])) {
+        if (_.isDate(opts[name])) {
+          opts[name] = opts[name].toISOString();
+        }
         validateFields[name] = [type, opts[name]];
       }
     });

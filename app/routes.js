@@ -16,11 +16,12 @@ exports = module.exports = function(app) {
 
   // account
   app.post('/accounts', controllers.account.create);
+  app.get('/accounts/:userid', controllers.account.accountGet);
   app.put('/accounts/:userid/login', controllers.account.login);
   app.put('/accounts/:userid/token', controllers.account.addUpworkToken);
   app.put('/accounts/:userid/feeds', controllers.account.addFeeds);
   app.put('/accounts/:userid/settings', controllers.account.updateSettings);
-  app.get('/accounts/:userid', controllers.account.accountGet);
+  app.put('/accounts/:userid/last_job_date', controllers.account.updateLastJobDate);
   app.get('/accounts/:userid/stats', controllers.account.stats);
   app.post('/accounts/:userid/debug', controllers.debug.store);
   app.get('/accounts/:userid/debug', controllers.debug.get);

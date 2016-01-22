@@ -109,12 +109,16 @@ function pLogin(req, res) {
     if (timezone !== userinfo.timezone) {
       async.parallel([
         function(internalCallback) {
-          account.updateNotificationsInterval({
-            userid,
-            interval: userinfo.notifyInterval,
-            timezone: timezone,
-            prevTimezone: userinfo.timezone
-          }, internalCallback);
+          if (!userinfo.feeds) {
+            internalCallback();
+          } else {
+            account.updateNotificationsInterval({
+              userid,
+              interval: userinfo.notifyInterval,
+              timezone: timezone,
+              prevTimezone: userinfo.timezone
+            }, internalCallback);
+          }
         },
         function(internalCallback) {
           account.update({
@@ -406,6 +410,52 @@ function pUpdateSettings(req, res) {
   workflow.emit('validateParams');
 }
 
+function pUpdateLastJobDate(req, res) {
+  var workflow = new EventEmitter(),
+    body = req.body || {},
+    cb = function(err, response) {
+      var result = {};
+      if (err) {
+        result.error = err;
+      } else {
+        result = response;
+      }
+      res.send(result);
+    },
+    userid = req.params.userid,
+    last_job_date = new Date(body.date);
+
+  workflow.on('validateParams', function() {
+    validator.check({
+      userid: ['string', userid],
+      last_job_date: ['date', last_job_date]
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('update');
+      }
+    });
+  });
+
+  workflow.on('update', function() {
+    account.update({
+      userid,
+      last_job_date
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          success: true
+        });
+      }
+    });
+  });
+
+  workflow.emit('validateParams');
+}
+
 function pStats(req, res) {
   account.stats({
     userid: req.params.userid
@@ -431,5 +481,6 @@ exports = module.exports = {
   addUpworkToken: pAddUpworkToken,
   addFeeds: pAddFeeds,
   updateSettings: pUpdateSettings,
+  updateLastJobDate: pUpdateLastJobDate,
   stats: pStats
 };

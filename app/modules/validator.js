@@ -34,7 +34,7 @@ function pIsObject(value) {
 
 function pIsDate(value) {
   value = new Date(value);
-  return _.isDate(value);
+  return value.getTime();
 }
 
 function pIsFunction(value) {

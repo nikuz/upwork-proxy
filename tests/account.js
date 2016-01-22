@@ -523,4 +523,57 @@ describe('Account', function() {
       });
     });
   });
+
+  describe('Update last job date', function() {
+    var user1id;
+    before(function(done) {
+      fixtures.cleanup(done);
+    });
+    beforeEach(function(done) {
+      events.replay([addUser1], function(err, response) {
+        user1id = response[0] && response[0].userid;
+        done();
+      });
+    });
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+    it('should update date of last job that user got', function(done) {
+      var newLastJobDate = new Date().toISOString();
+      async.series([function(callback) {
+        var data = {
+          date: newLastJobDate
+        };
+        request.put(`${baseUrl}/accounts/${user1id}/last_job_date`, data, function(err, response) {
+          expect(err).to.eql(null);
+          expect(response).to.be.an('object');
+          expect(!!response.error).to.eql(false);
+          expect(response.success).to.eql(true);
+          callback();
+        });
+      }, function(callback) {
+        request.get(`${baseUrl}/accounts/${user1id}/stats`, null, function(err, response) {
+          expect(err).to.eql(null);
+          expect(response).to.be.an('object');
+          expect(!!response.error).to.eql(false);
+          expect(response.id).to.eql(user1id);
+          expect(response.last_job_date).to.eql(newLastJobDate);
+          callback();
+        });
+      }], function() {
+        done();
+      });
+    });
+    it('should return error if received date can be converted to Date object', function(done) {
+      var data = {
+        date: 'test date'
+      };
+      request.put(`${baseUrl}/accounts/${user1id}/last_job_date`, data, function(err, response) {
+        expect(err).to.eql(null);
+        expect(response).to.be.an('object');
+        expect(!!response.error).to.eql(true);
+        done();
+      });
+    });
+  });
 });

@@ -61,6 +61,32 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /accounts/{userid}/login:
+    put:
+      tags:
+      - accounts
+      summary: Login
+      description: Store user's login time for monitoring active users and timezone. Returns success or error if failed.
+      operationId: account-login
+      parameters:
+        - name: userid
+          in: path
+          type: string
+          required: true
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/AccountLogin"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /accounts/{userid}/token:
     put:
       tags:
@@ -141,6 +167,31 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+  /accounts/{userid}/last_job_date:
+    put:
+      tags:
+      - accounts
+      summary: Update last job date
+      description: Update last job date. Returns success or error if failed.
+      operationId: account-update-last_job_date
+      parameters:
+        - name: userid
+          in: path
+          type: string
+          required: true
+        - name: date
+          in: formData
+          type: string
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
   /accounts/{userid}/stats:
     get:
       tags:
@@ -162,126 +213,126 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-  /jobs:
-    get:
-      tags:
-      - jobs
-      summary: Get list of jobs
-      description: Returns list of jobs or error if failed
-      operationId: jobs-list
-      parameters:
-        - name: q
-          in: query
-          description: Search query by all
-          required: false
-          type: string
-        - name: title
-          in: query
-          description: Search query by title
-          required: false
-          type: string
-        - name: skills
-          in: query
-          description: Search query by skills
-          required: false
-          type: string
-        - name: category2
-          in: query
-          description: Jobs category
-          required: false
-          type: string
-        - name: budget
-          in: query
-          description: Budget interval - [100 TO 200]
-          required: false
-          type: string
-        - name: duration
-          in: query
-          description: month, week, quarter, semester, ongoing
-          required: false
-          type: string
-        - name: job_type
-          in: query
-          description: fixed, hourly
-          required: false
-          type: string
-        - name: workload
-          in: query
-          description: as_needed, part_time, full_time
-          required: false
-          type: string
-        - name: paging
-          in: query
-          description: 10;20 First is offset, second is amount. Default is 0;10
-          required: false
-          type: string
-        - name: sort
-          in: query
-          default: create_time desc
-          description: create_time desc, Client_rating desc, Client_total_charge desc, Client_total_hours desc, score desc, workload desc, duration desc, create_time asc, Client_rating asc, Client_total_charge asc, Client_total_hours asc, score asc, workload asc, duration asc
-          required: false
-          type: string
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/JobsList"
-#            type: object
-#            properties:
-#              error:
-#                type: string
-#              result:
-#                $ref: "#/definitions/JobsList"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /api/profiles/v1/jobs/{id}.json:
-    get:
-      tags:
-      - jobs
-      summary: Get specific job
-      description: Returns cpecific job by id or error if failed
-      operationId: job-item
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: ID of exiting job
-          type: string
-      responses:
-        "200":
-          description: Success
-          schema:
-            $ref: "#/definitions/JobItem"
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/ErrorResponse"
-  /api/profiles/v2/metadata/categories.json:
-    get:
-      tags:
-      - jobs
-      summary: Get jobs categories
-      description: Returns jobs categories or error if failed
-      operationId: jobs-categories
-      responses:
-        default:
-          description: Error
-          schema:
-            $ref: "#/definitions/JobsCategoriesRequest"
+#   /jobs:
+#     get:
+#       tags:
+#       - jobs
+#       summary: Get list of jobs
+#       description: Returns list of jobs or error if failed
+#       operationId: jobs-list
+#       parameters:
+#         - name: q
+#           in: query
+#           description: Search query by all
+#           required: false
+#           type: string
+#         - name: title
+#           in: query
+#           description: Search query by title
+#           required: false
+#           type: string
+#         - name: skills
+#           in: query
+#           description: Search query by skills
+#           required: false
+#           type: string
+#         - name: category2
+#           in: query
+#           description: Jobs category
+#           required: false
+#           type: string
+#         - name: budget
+#           in: query
+#           description: Budget interval - [100 TO 200]
+#           required: false
+#           type: string
+#         - name: duration
+#           in: query
+#           description: month, week, quarter, semester, ongoing
+#           required: false
+#           type: string
+#         - name: job_type
+#           in: query
+#           description: fixed, hourly
+#           required: false
+#           type: string
+#         - name: workload
+#           in: query
+#           description: as_needed, part_time, full_time
+#           required: false
+#           type: string
+#         - name: paging
+#           in: query
+#           description: 10;20 First is offset, second is amount. Default is 0;10
+#           required: false
+#           type: string
+#         - name: sort
+#           in: query
+#           default: create_time desc
+#           description: create_time desc, Client_rating desc, Client_total_charge desc, Client_total_hours desc, score desc, workload desc, duration desc, create_time asc, Client_rating asc, Client_total_charge asc, Client_total_hours asc, score asc, workload asc, duration asc
+#           required: false
+#           type: string
+#       responses:
+#         "200":
+#           description: Success
+#           schema:
+#             $ref: "#/definitions/JobsList"
+# #            type: object
+# #            properties:
+# #              error:
+# #                type: string
+# #              result:
+# #                $ref: "#/definitions/JobsList"
+#         default:
+#           description: Error
+#           schema:
+#             $ref: "#/definitions/ErrorResponse"
+#   /api/profiles/v1/jobs/{id}.json:
+#     get:
+#       tags:
+#       - jobs
+#       summary: Get specific job
+#       description: Returns cpecific job by id or error if failed
+#       operationId: job-item
+#       parameters:
+#         - name: id
+#           in: path
+#           required: true
+#           description: ID of exiting job
+#           type: string
+#       responses:
+#         "200":
+#           description: Success
+#           schema:
+#             $ref: "#/definitions/JobItem"
+#         default:
+#           description: Error
+#           schema:
+#             $ref: "#/definitions/ErrorResponse"
+#   /api/profiles/v2/metadata/categories.json:
+#     get:
+#       tags:
+#       - jobs
+#       summary: Get jobs categories
+#       description: Returns jobs categories or error if failed
+#       operationId: jobs-categories
+#       responses:
+#         default:
+#           description: Error
+#           schema:
+#             $ref: "#/definitions/JobsCategoriesRequest"
 
 definitions:
-  RequestAuthUser:
-    properties:
-      first_name:
-        type: string
-      last_name:
-        type: string
-      timezone:
-        type: string
-      timezone_offset:
-        type: string
+  # RequestAuthUser:
+  #   properties:
+  #     first_name:
+  #       type: string
+  #     last_name:
+  #       type: string
+  #     timezone:
+  #       type: string
+  #     timezone_offset:
+  #       type: string
   AccountCreateRequest:
     properties:
       userid:
@@ -391,7 +442,6 @@ definitions:
     - dndFrom
     - dndTo
     - useProxy
-    - timezone
     properties:
       category2:
         type: string
@@ -415,104 +465,108 @@ definitions:
         type: string
       useProxy:
         type: boolean
+  AccountLogin:
+    required:
+    - timezone
+    properties:
       timezone:
         type: integer
-  JobsList:
-    properties:
-      server_time:
-        type: number
-      auth_user:
-        $ref: "#/definitions/RequestAuthUser"
-      jobs:
-        type: array
-        items:
-          $ref: "#/definitions/JobListItem"
-      paging:
-        $ref: "#/definitions/JobsPaging"
-  JobListItem:
-    properties:
-      id:
-        type: string
-      title:
-        type: string
-      snippet:
-        type: string
-      category2:
-        type: string
-      subcategory2:
-        type: string
-      skills:
-        type: array
-        items:
-          type: string
-      job_type:
-        type: string
-      budget:
-        type: number
-      duration:
-        type: string
-      workload:
-        type: string
-      job_status:
-        type: string
-      date_created:
-        type: string
-      url:
-        type: string
-      client:
-          $ref: "#/definitions/JobClient"
-  JobClient:
-    properties:
-      country:
-        type: string
-      feedback:
-        type: number
-      reviews_count:
-        type: number
-      jobs_posted:
-        type: number
-      past_hires:
-        type: number
-      payment_verification_status:
-        type: string
-  JobsPaging:
-    properties:
-      offset:
-        type: number
-      count:
-        type: number
-      total:
-        type: number
-  JobItem:
-    properties:
-      server_time:
-        type: number
-      auth_user:
-        $ref: "#/definitions/RequestAuthUser"
-      prifile:
-        type: string
-        description: Many job data
-  JobsCategoriesRequest:
-    properties:
-      server_time:
-        type: number
-      auth_user:
-        $ref: "#/definitions/RequestAuthUser"
-      categories:
-        type: array
-        items:
-          $ref: "#/definitions/JobsCategories"
-  JobsCategories:
-    properties:
-      title:
-        type: string
-      id:
-        type: string
-      topics:
-        type: array
-        items:
-          type: string
-          description: Subcategories
+  # JobsList:
+  #   properties:
+  #     server_time:
+  #       type: number
+  #     auth_user:
+  #       $ref: "#/definitions/RequestAuthUser"
+  #     jobs:
+  #       type: array
+  #       items:
+  #         $ref: "#/definitions/JobListItem"
+  #     paging:
+  #       $ref: "#/definitions/JobsPaging"
+  # JobListItem:
+  #   properties:
+  #     id:
+  #       type: string
+  #     title:
+  #       type: string
+  #     snippet:
+  #       type: string
+  #     category2:
+  #       type: string
+  #     subcategory2:
+  #       type: string
+  #     skills:
+  #       type: array
+  #       items:
+  #         type: string
+  #     job_type:
+  #       type: string
+  #     budget:
+  #       type: number
+  #     duration:
+  #       type: string
+  #     workload:
+  #       type: string
+  #     job_status:
+  #       type: string
+  #     date_created:
+  #       type: string
+  #     url:
+  #       type: string
+  #     client:
+  #         $ref: "#/definitions/JobClient"
+  # JobClient:
+  #   properties:
+  #     country:
+  #       type: string
+  #     feedback:
+  #       type: number
+  #     reviews_count:
+  #       type: number
+  #     jobs_posted:
+  #       type: number
+  #     past_hires:
+  #       type: number
+  #     payment_verification_status:
+  #       type: string
+  # JobsPaging:
+  #   properties:
+  #     offset:
+  #       type: number
+  #     count:
+  #       type: number
+  #     total:
+  #       type: number
+  # JobItem:
+  #   properties:
+  #     server_time:
+  #       type: number
+  #     auth_user:
+  #       $ref: "#/definitions/RequestAuthUser"
+  #     prifile:
+  #       type: string
+  #       description: Many job data
+  # JobsCategoriesRequest:
+  #   properties:
+  #     server_time:
+  #       type: number
+  #     auth_user:
+  #       $ref: "#/definitions/RequestAuthUser"
+  #     categories:
+  #       type: array
+  #       items:
+  #         $ref: "#/definitions/JobsCategories"
+  # JobsCategories:
+  #   properties:
+  #     title:
+  #       type: string
+  #     id:
+  #       type: string
+  #     topics:
+  #       type: array
+  #       items:
+  #         type: string
+  #         description: Subcategories
   ErrorResponse:
     properties:
       error:

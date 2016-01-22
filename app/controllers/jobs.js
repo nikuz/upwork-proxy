@@ -118,22 +118,44 @@ function pList(req, res) {
 }
 
 function pCategoriesList(req, res) {
-  var url = config.API_jobs_categories_url;
-  upwork.request({
-    url: url,
-    cacheIdData: {
-      url
+  var workflow = new EventEmitter(),
+    cb = function(err, response) {
+      var result = {};
+      if (err) {
+        result.error = err;
+      } else {
+        result = response;
+      }
+      res.send(result);
     },
-    cacheTTL: 1000 * 60 * 60 * 24 // one day
-  }, function(err, response) {
-    var result = {};
-    if (err) {
-      result.error = err;
-    } else {
-      result = response;
-    }
-    res.send(result);
+    token = req.query.token,
+    token_secret = req.query.token_secret;
+
+  workflow.on('validateParams', function() {
+    validator.check({
+      token: ['string', token],
+      token_secret: ['string', token_secret]
+    }, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        workflow.emit('getJobs');
+      }
+    });
   });
+
+  workflow.on('getJobs', function() {
+    var url = config.API_jobs_categories_url;
+    upwork.request({
+      url: url,
+      cacheIdData: {
+        url
+      },
+      cacheTTL: 1000 * 60 * 60 * 24 // one day
+    }, cb);
+  });
+
+  workflow.emit('validateParams');
 }
 
 // ---------
