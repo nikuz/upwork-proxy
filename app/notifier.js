@@ -154,7 +154,7 @@ function process(options) {
       }
 
       notificationsModule.send({
-        notifications: notifications
+        notifications
       }, callback);
     }
   ], function(err) {

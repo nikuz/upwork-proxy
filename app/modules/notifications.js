@@ -1,6 +1,7 @@
 'use strict';
 
-var path = require('path'),
+var _ = require('underscore'),
+  path = require('path'),
   async = require('async'),
   gcm = require('node-gcm'),
   apn = require('apn'),
@@ -15,8 +16,8 @@ if (!senderGCM) {
 }
 if (!senderAPN) {
   senderAPN = new apn.Connection({
-    cert: path.join(__dirname, '../../keys/deploy-cert.pem'),
-    key: path.join(__dirname, '../../keys/deploy-key.pem'),
+    cert: path.join(__dirname, '../../keys/cert.pem'),
+    key: path.join(__dirname, '../../keys/key.pem'),
     ca: path.join(__dirname, '../../keys/entrust_2048_ca.cer'),
     production: process.env.NODE_ENV === 'PROD'
   });
@@ -59,12 +60,14 @@ function pSend(options, callback) {
       let myDevice = new apn.Device(item.push_id),
         note = new apn.Notification();
 
-      note.alert = messageText;
-      note.badge = item.amount;
-      note.sound = 'ping.aiff';
-      note.payload = {
-        last_job_date: item.firstJob.date_created
-      };
+      _.extend(note, {
+        alert: messageText,
+        badge: item.amount,
+        sound: 'ping.aiff',
+        payload: {
+          last_job_date: item.firstJob.date_created
+        }
+      });
 
       senderAPN.pushNotification(note, myDevice);
       internalCallback();

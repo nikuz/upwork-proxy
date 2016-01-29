@@ -10,7 +10,8 @@ var utils = [
   './account_convert_fields',
   './restore_notifications_topics',
   './dbClone',
-  './dbSize'
+  './dbSize',
+  './notifications'
 ];
 
 exports = module.exports = function(grunt, done, env, target, args) {
