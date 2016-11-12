@@ -9,5 +9,6 @@
   "disallowMultipleVarDecl": null,
   "requireBlocksOnNewline": null,
   "requirePaddingNewLinesAfterBlocks": null,
-  "esnext": true
+  "requireSpacesInAnonymousFunctionExpression": null,
+  "maximumLineLength": null
 }

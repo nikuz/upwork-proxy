@@ -93,14 +93,14 @@ function pCheck(options, callback) {
       'any'
     ];
 
-  items = _.map(opts, (item, key) => {
+  items = _.map(opts, function(item, key) {
     return {
       options: item,
       key: key
     };
   });
 
-  async.each(items, (item, internalCallback) => {
+  async.each(items, function(item, internalCallback) {
     if (!item.options) {
       return internalCallback();
     }
