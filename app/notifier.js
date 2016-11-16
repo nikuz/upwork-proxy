@@ -142,6 +142,7 @@ function process(options) {
             return internalCallback();
           }
 
+          response = JSON.parse(response);
           response = filterJobs({
             jobs: response.jobs,
             limiter: user.last_job_date
