@@ -154,6 +154,11 @@ function process(options) {
               amount: response.length,
               firstJob: response[0]
             });
+            // update last job date for current user
+            account.update({
+              userid: user.id,
+              last_job_date: response[0].date_created
+            });
           }
           internalCallback();
         });
