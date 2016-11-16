@@ -151,7 +151,7 @@ function pCategoriesList(req, res) {
       cacheIdData: {
         url
       },
-      cacheTTL: 1000 * 60 * 60 * 24 // one day
+      cacheTTL: 60 * 60 * 24 // one day
     }, cb);
   });
 

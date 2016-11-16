@@ -78,6 +78,7 @@ function process(options) {
       });
     },
     function(callback) {
+      // TODO: uncomment it:
       // get users who should get notification on current minutes
       db.union(minutes, 'users', function(err, response) {
         if (err) {
@@ -87,6 +88,17 @@ function process(options) {
           callback();
         }
       });
+      // TODO: remove it:
+      // db.hgetall('users', function(err, response) {
+      //   if (err) {
+      //     callback(err);
+      //   } else {
+      //     users = _.map(response, function(item) {
+      //       return JSON.parse(item);
+      //     });
+      //     callback();
+      //   }
+      // });
     },
     function(callback) {
       // check users activity, get new jobs, calculate notifications count
@@ -113,13 +125,14 @@ function process(options) {
             duration: reqFieldPrepare(user.duration),
             job_type: reqFieldPrepare(user.jobType),
             workload: reqFieldPrepare(user.workload),
-            paging: '0;50',
+            paging: '0;' + config.JOBS_PER_PAGE,
             sort: 'create_time desc'
           };
 
         if (user.category2) {
-          requestData.category2 = user.category2;
+          requestData.category2 = reqFieldPrepare(user.category2);
         }
+        // console.log(requestData);
         upwork.request({
           url: config.API_jobs_url,
           data: requestData,
@@ -194,6 +207,9 @@ function pStart(options, callback) {
       startAfter: timeToStartCron
     });
   } else {
+    // TODO: remove it:
+    // timeToStartCron = 10;
+    //
     console.log('Seconds to first notification: %d', timeToStartCron / 1000);
     setTimeout(function() {
       log.captureMessage(`Start cron job in ${new Date()}`);

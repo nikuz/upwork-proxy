@@ -20,7 +20,7 @@ function pCreate(options, callback) {
     cb = callback || _.noop,
     opts = options || {},
     userid,
-    alreadyExists;
+    userinfo;
 
   workflow.on('validateParams', function() {
     validator.check({
@@ -33,9 +33,7 @@ function pCreate(options, callback) {
           if (err) {
             internalCallback(err);
           } else {
-            if (response) {
-              alreadyExists = true;
-            }
+            userinfo = response;
             internalCallback();
           }
         });
@@ -57,10 +55,8 @@ function pCreate(options, callback) {
       if (err) {
         cb(err);
       } else {
-        if (alreadyExists) {
-          cb(null, {
-            userid: userid
-          });
+        if (userinfo) { // already registered
+          workflow.emit('loginUpdate');
         } else {
           workflow.emit('create');
         }
@@ -90,6 +86,19 @@ function pCreate(options, callback) {
       last_logon: timestamp
     };
     db.hset('users', userid, userInfo, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        cb(null, {
+          userid: userid
+        });
+      }
+    });
+  });
+
+  workflow.on('loginUpdate', function() {
+    userinfo.last_logon = new Date().toISOString();
+    db.hset('users', userid, userinfo, function(err) {
       if (err) {
         cb(err);
       } else {

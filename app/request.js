@@ -1,7 +1,6 @@
 'use strict';
 
-var _ = require('underscore'),
-  request = require('request'),
+var request = require('request'),
   qs = require('querystring');
 
 var noop = function() {};

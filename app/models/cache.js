@@ -9,6 +9,7 @@ var _ = require('underscore'),
   EventEmitter = require('events').EventEmitter,
   defaultCacheTTL = config.cacheTTL;
 
+// TODO: remove it:
 if (process.env.NODE_ENV === 'TEST') {
   defaultCacheTTL = 3; // 3 seconds
 }

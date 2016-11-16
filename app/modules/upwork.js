@@ -96,13 +96,14 @@ function pRequest(options, callback) {
         data += chunk;
       });
       res.on('end', function() {
+        var result;
         try {
-          JSON.parse(data);
+          result = JSON.parse(data);
         } catch (e) {
           log.captureMessage('Upwork is down');
           cb(null, 'upwork_is_down');
         } finally {
-          cb(null, data);
+          cb(null, result);
           workflow.emit('saveCache', data);
         }
       });
