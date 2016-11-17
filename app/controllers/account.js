@@ -250,7 +250,7 @@ function pAddFeeds(req, res) {
       if (userinfo.prevFeeds) {
         prevFeeds = _.clone(userinfo.prevFeeds);
       }
-      prevFeeds.push(feeds);
+      prevFeeds.push(userinfo.feeds);
       prevFeeds = _.uniq(prevFeeds);
     }
     account.update({
@@ -275,7 +275,9 @@ function pAddFeeds(req, res) {
       account.updateNotificationsInterval({
         userid,
         interval: userinfo.notifyInterval,
-        timezone: userinfo.timezone
+        timezone: userinfo.timezone,
+        dndFrom: userinfo.dndFrom,
+        dndTo: userinfo.dndTo
       }, function(err) {
         if (err) {
           cb(err);

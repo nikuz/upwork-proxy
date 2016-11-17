@@ -465,6 +465,9 @@ definitions:
         type: string
       useProxy:
         type: boolean
+      timezone:
+        description: User's time zone - 180, 720 etc.
+        type: number
   AccountLogin:
     required:
     - timezone
