@@ -54,12 +54,10 @@ function pCreate(options, callback) {
     }, function(err) {
       if (err) {
         cb(err);
+      } else if (userinfo) { // already registered
+        workflow.emit('loginUpdate');
       } else {
-        if (userinfo) { // already registered
-          workflow.emit('loginUpdate');
-        } else {
-          workflow.emit('create');
-        }
+        workflow.emit('create');
       }
     });
   });
@@ -102,9 +100,9 @@ function pCreate(options, callback) {
       if (err) {
         cb(err);
       } else {
-        cb(null, {
-          userid: userid
-        });
+        cb(null, _.extend(userinfo, {
+          alreadyRegistered: true
+        }));
       }
     });
   });

@@ -576,4 +576,90 @@ describe('Account', function() {
       });
     });
   });
+
+  // update the last_login and the time zone for already registered users
+  // by second and others registration requests
+  describe('Update by create', function() {
+    var user1id;
+    before(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    beforeEach(function(done) {
+      events.replay([addUser1], function(err, response) {
+        var results = response;
+        user1id = results[0] && results[0].userid;
+        done();
+      });
+    });
+
+    afterEach(function(done) {
+      fixtures.cleanup(done);
+    });
+
+    it('should update last_login field for already registered user', function(done) {
+      async.series([
+        function(callback) {
+          setTimeout(function() {
+            callback();
+          }, 1000);
+        },
+        function(callback) {
+          request.post(`${baseUrl}/accounts`, addUser1.params, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.userid).to.eql(user1id);
+            callback();
+          });
+        },
+        function(callback) {
+          request.get(`${baseUrl}/accounts/${user1id}`, null, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.id).to.eql(user1id);
+            expect(Date.now() - new Date(response.last_logon).getTime()).to.be.below(100);
+            callback();
+          });
+        }
+      ], done);
+    });
+
+    it('should update timezone and DND interval if new timezone received for already registered user', function(done) {
+      var newTimeZone = addUser2.params.timezone;
+      async.series([
+        function(callback) {
+          var data = _.clone(addUser1.params);
+          data.timezone = newTimeZone;
+          request.post(`${baseUrl}/accounts`, data, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.userid).to.eql(user1id);
+            callback();
+          });
+        },
+        function(callback) {
+          request.get(`${baseUrl}/accounts/${user1id}/stats`, null, function(err, response) {
+            expect(err).to.eql(null);
+            expect(response).to.be.an('object');
+            expect(!!response.error).to.eql(false);
+            expect(response.id).to.eql(user1id);
+            expect(response.timezone).to.eql(newTimeZone);
+            var minutes = response.notificationsMinutes;
+            expect(minutes).to.be.an('array');
+            expect(minutes).to.have.length.above(0);
+            _.each(minutes, function(item) {
+              item = item.split(':');
+              item[1] = Number(item[1]);
+              expect(item[0]).to.eql(String(newTimeZone));
+              expect(item[1] % addUser1.params.notifyInterval).to.eql(0);
+            });
+            callback();
+          });
+        }
+      ], done);
+    });
+  });
 });

@@ -97,7 +97,7 @@ module.exports = function(grunt) {
     if (target) {
       process.env.TEST_TARGET = target;
     }
-    grunt.task.run(['express:local', 'wait:pause', 'mochaWebdriver:phantom']);
+    grunt.task.run(['express:local', 'mochaWebdriver:phantom']);
   });
 
   grunt.registerTask('utils', function() {

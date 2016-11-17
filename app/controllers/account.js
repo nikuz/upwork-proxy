@@ -11,32 +11,85 @@ var _ = require('underscore'),
 // ----------------
 
 function pCreate(req, res) {
-  var body = req.body || {};
-  account.create({
-    id: body.id,
-    os: body.os,
-    category2: body.category2,
-    budgetFrom: body.budgetFrom,
-    budgetTo: body.budgetTo,
-    daysPosted: body.daysPosted,
-    duration: body.duration,
-    jobType: body.jobType,
-    workload: body.workload,
-    notifyInterval: body.notifyInterval,
-    notifyAllow: body.notifyAllow,
-    dndFrom: body.dndFrom,
-    dndTo: body.dndTo,
-    useProxy: body.useProxy,
-    timezone: body.timezone
-  }, function(err, response) {
-    var result = {};
-    if (err) {
-      result.error = err;
-    } else {
-      result = response;
-    }
-    res.send(result);
+  var workflow = new EventEmitter(),
+    cb = function(err, response) {
+      var result = {};
+      if (err) {
+        result.error = err;
+      } else {
+        result = response;
+      }
+      res.send(result);
+    },
+    body = req.body || {},
+    userinfo;
+
+  workflow.on('create', function() {
+    account.create({
+      id: body.id,
+      os: body.os,
+      category2: body.category2,
+      budgetFrom: body.budgetFrom,
+      budgetTo: body.budgetTo,
+      daysPosted: body.daysPosted,
+      duration: body.duration,
+      jobType: body.jobType,
+      workload: body.workload,
+      notifyInterval: body.notifyInterval,
+      notifyAllow: body.notifyAllow,
+      dndFrom: body.dndFrom,
+      dndTo: body.dndTo,
+      useProxy: body.useProxy,
+      timezone: body.timezone
+    }, function(err, response) {
+      if (err) {
+        cb(err);
+      } else if (response.alreadyRegistered) {
+        userinfo = response;
+        workflow.emit('checkTimeZone');
+      } else {
+        cb(null, {
+          userid: response.userid
+        });
+      }
+    });
   });
+
+  workflow.on('checkTimeZone', function() {
+    if (userinfo.timezone !== body.timezone) {
+      async.parallel([
+        function(callback) {
+          account.update({
+            userid: userinfo.id,
+            timezone: body.timezone
+          }, callback);
+        },
+        function(callback) {
+          account.updateNotificationsInterval({
+            userid: userinfo.id,
+            interval: body.notifyInterval,
+            timezone: body.timezone,
+            dndFrom: body.dndFrom,
+            dndTo: body.dndTo
+          }, callback);
+        }
+      ], function(err) {
+        if (err) {
+          cb(err);
+        } else {
+          cb(null, {
+            userid: userinfo.id
+          });
+        }
+      });
+    } else {
+      cb(null, {
+        userid: userinfo.id
+      });
+    }
+  });
+
+  workflow.emit('create');
 }
 
 function pAccountGet(req, res) {
@@ -332,7 +385,8 @@ function pUpdateSettings(req, res) {
       notifyAllow: ['boolean', body.notifyAllow],
       dndFrom: ['string', body.dndFrom],
       dndTo: ['string', body.dndTo],
-      useProxy: ['boolean', body.useProxy]
+      useProxy: ['boolean', body.useProxy],
+      timezone: ['number', body.timezone]
     }, function(err) {
       if (err) {
         cb(err);
@@ -356,7 +410,8 @@ function pUpdateSettings(req, res) {
       notifyAllow: body.notifyAllow,
       dndFrom: body.dndFrom,
       dndTo: body.dndTo,
-      useProxy: body.useProxy
+      useProxy: body.useProxy,
+      timezone: body.timezone
     }, function(err) {
       if (err) {
         cb(err);
@@ -391,7 +446,7 @@ function pUpdateSettings(req, res) {
       updateInterval({
         timezone: userinfo.timezone
       });
-    } else if (body.notifyAllow === true && (userinfo.notifyAllow === false || body.notifyInterval !== userinfo.notifyInterval || body.dndFrom !== userinfo.dndFrom || body.dndTo !== userinfo.dndTo)) {
+    } else if (body.notifyAllow === true && (userinfo.notifyAllow === false || body.notifyInterval !== userinfo.notifyInterval || body.dndFrom !== userinfo.dndFrom || body.dndTo !== userinfo.dndTo || body.timezone || userinfo.timezone)) {
       // if user changed notification interval
       // or enabled notifications when it was disabled
       // or changed "Do not disturb" interval
