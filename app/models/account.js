@@ -101,6 +101,7 @@ function pCreate(options, callback) {
         cb(err);
       } else {
         cb(null, _.extend(userinfo, {
+          userid: userinfo.id,
           alreadyRegistered: true
         }));
       }

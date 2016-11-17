@@ -60,13 +60,13 @@ function pCreate(req, res) {
       async.parallel([
         function(callback) {
           account.update({
-            userid: userinfo.id,
+            userid: userinfo.userid,
             timezone: body.timezone
           }, callback);
         },
         function(callback) {
           account.updateNotificationsInterval({
-            userid: userinfo.id,
+            userid: userinfo.userid,
             interval: body.notifyInterval,
             timezone: body.timezone,
             dndFrom: body.dndFrom,
@@ -78,13 +78,13 @@ function pCreate(req, res) {
           cb(err);
         } else {
           cb(null, {
-            userid: userinfo.id
+            userid: userinfo.userid
           });
         }
       });
     } else {
       cb(null, {
-        userid: userinfo.id
+        userid: userinfo.userid
       });
     }
   });
