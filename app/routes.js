@@ -2,7 +2,8 @@
 
 var express = require('express'),
   bodyParser = require('body-parser'),
-  controllers = require('./controllers/index');
+  controllers = require('./controllers/index'),
+  path = require('path');
 
 exports = module.exports = function(app) {
   // settings
@@ -37,4 +38,12 @@ exports = module.exports = function(app) {
   app.use('/docs/editor', express.static(__dirname + '/../public/swagger-editor'));
   app.use('/docs/editor/specs', express.static(__dirname + '/../api.yaml'));
   app.put('/docs/editor/specs', controllers.utils.storeApi);
+
+  // main page
+  // app.use(express.static(__dirname + '/../public/homepage'));
+  app.get('/', function(req, res) {
+    res.sendFile(path.resolve(__dirname + '/../public/homepage/index.html'));
+  });
+  app.use('/images', express.static(__dirname + '/../public/homepage/images'));
+  app.use('/i', express.static(__dirname + '/../public/homepage/i'));
 };

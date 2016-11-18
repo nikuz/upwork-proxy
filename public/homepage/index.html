@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upwatcher homepage</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Tahoma;
+      font-size: 75%;
+    }
+    a {
+      color: #408c1d;
+    }
+
+    h1 {
+      margin: 0;
+      padding: 0;
+      font-size: 16px;
+      color: #4b4c4d;
+    }
+
+    header {
+      height: 250px;
+      background: #4b4c4d url(i/header.svg) 50% 0 no-repeat;
+    }
+
+    #wrap {
+      overflow: hidden;
+      max-width: 900px;
+      padding: 15px 30px;
+      margin: 0 auto;
+    }
+    p {
+      font-size: 13px;
+    }
+    .store_item {
+      float: left;
+      width: 50%;
+      min-width: 300px;
+      margin-bottom: 30px;
+      margin-top: 20px;
+    }
+    .store_item_head {
+      margin-bottom: 15px;
+    }
+    h3 {
+      display: inline-block;
+      font-size: 16px;
+      margin: 0 30px 0 0;
+      vertical-align: middle;
+    }
+    #play_link {
+      display: inline-block;
+      width: 135px;
+      height: 40px;
+      background: url(i/play.svg) 0 0 no-repeat;
+      vertical-align: middle;
+    }
+    #chrome_link {
+      display: inline-block;
+      width: 150px;
+      height: 45px;
+      background: url(i/chrome.svg) 0 0 no-repeat;
+      vertical-align: middle;
+    }
+    h2 {
+      font-size: 16px;
+      margin: 1em 0;
+    }
+    #contacts {
+      clear: both;
+      margin-bottom: 30px;
+    }
+    #contacts_list {
+      margin: 0;
+    }
+    dt {
+      float: left;
+      font-weight: bold;
+      width: 100px;
+      margin-bottom: 8px;
+    }
+    dd {
+      clear: right;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header id="header">
+  <h1>Upwatcher</h1>
+</header>
+<div id="wrap">
+  <p>Do you want to work on a paradise beach or at any pretty place? Just install application Upwatcher, which helps you conveniently search, filter, and save interesting jobs by the world's biggest platform for freelancers <a href="https://upwork.com">upwork.com</a> (elance.com).</p>
+
+  <p>The app allows you to stay in touch with thousands clients who post new interesting work proposals.</p>
+
+  <p>Upwatcher based on native Upwork API. Application haven't access to any you data on Upwork.com, also don't change any settings. It's working locally, API access needed only for use native Upwork search.</p>
+
+  <p>
+    Features:<br>
+  - customizable search<br>
+  - ability to mark jobs as Favorites<br>
+  - show system Notifications<br>
+  </p>
+  <div class="store_item">
+    <div class="store_item_head">
+      <h3>Android app</h3>
+      <a href="https://play.google.com/store/apps/details?id=com.selfproduct.upwatcher" id="play_link"></a>
+    </div>
+    <a href="https://play.google.com/store/apps/details?id=com.selfproduct.upwatcher">
+      <img src="images/android.png" width="70%" alt="Android app">
+    </a>
+  </div>
+  <div class="store_item">
+    <div class="store_item_head">
+      <h3>Chrome</h3>
+      <a href="https://chrome.google.com/webstore/detail/upwatcher-upwork-job-watc/cpmlhfgkdmkceojlpjdnddhjimnlockd" id="chrome_link"></a>
+    </div>
+    <a href="https://chrome.google.com/webstore/detail/upwatcher-upwork-job-watc/cpmlhfgkdmkceojlpjdnddhjimnlockd">
+      <img src="images/extension.png" width="100%" alt="Android app">
+    </a>
+  </div>
+
+  <div id="contacts">
+    <h2>Contacts</h2>
+    <dl id="contacts_list">
+      <dt>Name:</dt>
+      <dd>Nikolay Kuznetcov</dd>
+      <dt>Email:</dt>
+      <dd><a href="mailto:kuznetcov.nikolaj@gmail.com">kuznetcov.nikolaj@gmail.com</a></dd>
+      <dt>LinkedIn:</dt>
+      <dd><a href="https://linkedin.com/in/kuznetcovnikolai/">https://linkedin.com/kuznetcovnikolai</a></dd>
+      <dt>Upwork:</dt>
+      <dd><a href="https://odesk.com/users/~0105e0c72ad591b0f9">https://odesk.com/2ad591b0f9...</a></dd>
+    </dl>
+  </div>
+</div>
+
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function(){
+    var header = document.getElementById('header'),
+      height = window.innerWidth / 100 * 20,
+      maxHeight = 250;
+
+    if (height > maxHeight) {
+      height = maxHeight;
+    }
+
+    header.style.height = height + 'px';
+  });
+</script>
+</body>
+</html>
