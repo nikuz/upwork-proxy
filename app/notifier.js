@@ -126,11 +126,12 @@ function process(options) {
             job_type: reqFieldPrepare(user.jobType),
             workload: reqFieldPrepare(user.workload),
             paging: '0;' + config.JOBS_PER_PAGE,
+            days_posted: 50,
             sort: 'create_time desc'
           };
 
         if (user.category2) {
-          requestData.category2 = reqFieldPrepare(user.category2);
+          requestData.category2 = user.category2;
         }
         // console.log(requestData);
         upwork.request({
