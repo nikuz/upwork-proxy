@@ -14,5 +14,5 @@ exports = module.exports = {
 
   notification_interval: 5,
 
-  cacheTTL: 1000 * 60 * 4 // 4 minutes
+  cacheTTL: 60 * 4 // 4 minutes
 };
