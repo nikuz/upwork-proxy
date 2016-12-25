@@ -95,7 +95,7 @@ function process(options) {
         return callback();
       }
 
-      async.each(users, function(user, internalCallback) {
+      async.eachSeries(users, function(user, internalCallback) {
         if (new Date() - new Date(user.last_logon) > 864e5 * 2) {
           // if user doesn't use APP more than two days disable notifications for him
           return account.disableNotifications({
