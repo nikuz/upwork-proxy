@@ -168,12 +168,13 @@ function process(options) {
   ], function(err) {
     if (err) {
       log.captureError(err);
-    } else {
-      let endTime = new Date().getTime(),
-        spentTime = (endTime - startTime) / 1000;
-
-      log.captureMessage('Done. Spent time: ' + spentTime);
     }
+
+    let endTime = new Date().getTime(),
+      spentTime = (endTime - startTime) / 1000;
+
+    log.captureMessage('Done. Spent time: ' + spentTime);
+
     setTimeout(function() {
       pStart();
     }, 1000);

@@ -55,7 +55,12 @@ function pSend(options = {}, callback = _.noop) {
           last_job_date: item.firstJob.date_created
         }
       };
-      senderFCM.send(message, internalCallback);
+      senderFCM.send(message, function(err) {
+        if (err) {
+          log.captureError(err);
+        }
+        internalCallback();
+      });
       // let message = new gcm.Message({
       //   data: {
       //     title: config.serviceName,
