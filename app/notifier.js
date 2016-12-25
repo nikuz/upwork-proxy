@@ -108,7 +108,7 @@ function process(options) {
             return field === 'all' ? '' : field;
           },
           requestData = {
-            q: user.feeds,
+            q: user.feeds.toLowerCase(),
             budget: `[${user.budgetFrom} TO ${user.budgetTo}]`,
             duration: reqFieldPrepare(user.duration),
             job_type: reqFieldPrepare(user.jobType),
@@ -118,7 +118,8 @@ function process(options) {
             sort: 'create_time desc'
           };
 
-        if (user.category2) {
+
+        if (user.category2 !== 'All') {
           requestData.category2 = user.category2;
         }
         upwork.request({
