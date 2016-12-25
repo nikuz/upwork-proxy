@@ -14,7 +14,5 @@ exports = module.exports = {
 
   notification_interval: 5,
 
-  JOBS_PER_PAGE: 20,
-
-  cacheTTL: 60 * 5 // 5 minutes
+  cacheTTL: 1000 * 60 * 4 // 4 minutes
 };
