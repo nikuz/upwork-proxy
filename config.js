@@ -12,6 +12,8 @@ exports = module.exports = {
   API_jobs_categories_url: '/api/profiles/v2/metadata/categories.json',
   API_job_url: '/api/profiles/v1/jobs/{id}.json',
 
+  JOBS_PER_PAGE: 20,
+
   notification_interval: 5,
 
   cacheTTL: 60 * 4 // 4 minutes
