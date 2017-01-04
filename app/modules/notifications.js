@@ -49,7 +49,8 @@ function pSend(options = {}, callback = _.noop) {
         notification: {
           title: config.serviceName,
           body: messageText,
-          icon: 'ic_notification'
+          icon: 'ic_notification',
+          sound: 'default'
         },
         data: {
           last_job_date: item.firstJob.date_created
