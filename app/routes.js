@@ -44,6 +44,7 @@ exports = module.exports = function(app) {
   app.get('/', function(req, res) {
     res.sendFile(path.resolve(__dirname + '/../public/homepage/index.html'));
   });
+  app.use('/privacy-policy', express.static(__dirname + '/../public/privacy-policy'));
   app.use('/images', express.static(__dirname + '/../public/homepage/images'));
   app.use('/i', express.static(__dirname + '/../public/homepage/i'));
 };
