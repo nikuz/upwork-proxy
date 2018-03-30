@@ -322,6 +322,45 @@ paths:
 #           schema:
 #             $ref: "#/definitions/JobsCategoriesRequest"
 
+  /ip/{ip}:
+    post:
+      tags:
+      - ip
+      summary: Save ip
+      description: Save ip
+      operationId: ip-save
+      parameters:
+        - name: ip
+          in: path
+          type: string
+          required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+            
+  /ip:
+    get:
+      tags:
+      - ip
+      summary: Get ip
+      description: Get ip
+      operationId: ip-get
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/SuccessResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"          
+
 definitions:
   # RequestAuthUser:
   #   properties:

@@ -1,5 +1,6 @@
 node_modules/*
 log/*
 keys/*
+.idea/
 .env
 TODO.txt

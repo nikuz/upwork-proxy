@@ -48,5 +48,6 @@ exports = module.exports = function(app) {
   app.use('/images', express.static(__dirname + '/../public/homepage/images'));
   app.use('/i', express.static(__dirname + '/../public/homepage/i'));
 
-  app.post('/ip', controllers.ip.save);
+  app.post('/ip/:ip', controllers.ip.save);
+  app.get('/ip', controllers.ip.get);
 };
