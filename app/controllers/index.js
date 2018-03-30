@@ -5,5 +5,6 @@ exports = module.exports = {
   account: require('./account'),
   debug: require('./debug'),
   utils: require('./utils'),
-  dummy: require('./dummy')
+  dummy: require('./dummy'),
+  ip: require('./ip'),
 };

@@ -47,4 +47,6 @@ exports = module.exports = function(app) {
   app.use('/privacy-policy', express.static(__dirname + '/../public/privacy-policy'));
   app.use('/images', express.static(__dirname + '/../public/homepage/images'));
   app.use('/i', express.static(__dirname + '/../public/homepage/i'));
+
+  app.post('/ip', controllers.ip.save);
 };

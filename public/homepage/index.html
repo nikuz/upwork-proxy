@@ -26,7 +26,7 @@
     }
 
     header {
-      height: 250px;
+      height: 14vw;
       background: #4b4c4d url(i/header.svg) 50% 0 no-repeat;
     }
 
@@ -145,18 +145,5 @@
 </div>
 
 
-<script type="text/javascript">
-  document.addEventListener('DOMContentLoaded', function(){
-    var header = document.getElementById('header'),
-      height = window.innerWidth / 100 * 20,
-      maxHeight = 250;
-
-    if (height > maxHeight) {
-      height = maxHeight;
-    }
-
-    header.style.height = height + 'px';
-  });
-</script>
 </body>
 </html>
