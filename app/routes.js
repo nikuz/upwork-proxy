@@ -50,4 +50,5 @@ exports = module.exports = function(app) {
 
   app.post('/ip/:ip', controllers.ip.save);
   app.get('/ip', controllers.ip.get);
+  app.get('/ip/camera', controllers.ip.getCameraView);
 };

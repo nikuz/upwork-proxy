@@ -30,7 +30,21 @@ function pGet(req, res) {
     });
 }
 
+function pGetCameraView(req, res) {
+    fs.readFile(file, function(err, data) {
+        if (err) {
+            res.send({ error: err });
+        } else {
+            res.writeHead(307,
+                { Location: 'http://' + data.toString() + ':88/webcam/?action=stream' }
+            );
+            res.end();
+        }
+    });
+}
+
 exports = module.exports = {
     save: pSave,
-    get: pGet
+    get: pGet,
+    getCameraView: pGetCameraView,
 };
