@@ -19,14 +19,20 @@ function pSave(req, res) {
 }
 
 function pGet(req, res) {
+    const redirectPort = req.query.redirectPort;
     fs.readFile(file, function(err, data) {
-        var result = {};
         if (err) {
-            result.error = err;
+            res.send({ error: err });
         } else {
-            result = data;
+            if (typeof redirectPort === 'string') {
+                res.writeHead(307,
+                    { Location: `http://${data}:${redirectPort}` }
+                );
+                res.end();
+            } else {
+                res.send(data);
+            }
         }
-        res.send(result);
     });
 }
 
